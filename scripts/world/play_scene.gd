@@ -11,6 +11,8 @@ extends Node2D
 
 signal exit_requested
 signal level_completed(level_id: String)
+signal player_died(at: Vector2, ink_lost: int)
+signal enemy_killed(enemy_id: String, at: Vector2)
 
 const CREATURE_SCENE: String = "res://scenes/creature/creature.tscn"
 
@@ -21,6 +23,11 @@ var player: Creature = null
 var hud: Hud = null
 var pause_menu: PauseMenu = null
 var spawn_point: Vector2 = Vector2.ZERO
+## Injectable so tests can force the blueprint RNG to fail and prove the pity
+## timer alone still delivers.
+var drop_rng: RandomNumberGenerator = null
+
+var _enemies: Array[Creature] = []
 
 
 func _ready() -> void:
@@ -28,6 +35,7 @@ func _ready() -> void:
 	_build_world()
 	_spawn_player()
 	_build_ui()
+	_restore_death_blob()
 	_on_world_ready()
 
 
@@ -47,6 +55,9 @@ func _spawn_player() -> void:
 	player.is_player = true
 	player.position = spawn_point
 	add_child(player)
+
+	player.add_to_group("player")
+	player.health.died.connect(_on_player_died)
 
 	var problems: PackedStringArray = player.assemble(SaveManager.loadout())
 	if not problems.is_empty():
@@ -80,12 +91,81 @@ func _unhandled_input(event: InputEvent) -> void:
 		pause_menu.toggle()
 
 
+## Spawn an enemy that hunts the player and drops when it dies.
+func add_enemy(enemy_id: String, at: Vector2) -> Creature:
+	var enemy: Creature = EnemyFactory.spawn(enemy_id, self, at, player)
+	if enemy == null:
+		return null
+	_enemies.append(enemy)
+	enemy.health.died.connect(_on_enemy_died.bind(enemy))
+	return enemy
+
+
+func enemies() -> Array[Creature]:
+	return _enemies.filter(func(e: Creature) -> bool: return is_instance_valid(e))
+
+
+## An enemy dies: roll its drop table, scatter the result, and let the level know.
+func _on_enemy_died(enemy: Creature) -> void:
+	var enemy_id: String = EnemyFactory.id_of(enemy)
+	if enemy_id == "":
+		return
+	DropTable.spawn_all(DropTable.roll(enemy_id, drop_rng), self,
+		enemy.global_position, drop_rng)
+	enemy_killed.emit(enemy_id, enemy.global_position)
+	_enemies.erase(enemy)
+	await get_tree().create_timer(1.2).timeout
+	if is_instance_valid(enemy):
+		enemy.queue_free()
+
+
+## Death drops the entire wallet as one blob where you fell, and you restart at
+## the entrance with full HP. A second death overwrites the first blob — the old
+## ink is gone forever (Decision 7, DESIGN §7).
+func _on_player_died() -> void:
+	var lost: int = SaveManager.ink
+	var at: Vector2 = player.global_position
+	if level_id != "":
+		SaveManager.set_death_blob(level_id, at, lost)
+	SaveManager.ink = 0
+	player_died.emit(at, lost)
+
+	await get_tree().create_timer(1.0).timeout
+	if not is_inside_tree():
+		return  # the player quit to the Lab before the respawn beat finished
+	_clear_blobs()
+	_restore_death_blob()
+	respawn_player()
+
+
 ## Respawn at the entrance with full HP (DESIGN §7).
 func respawn_player() -> void:
 	player.position = spawn_point
 	player.velocity = Vector2.ZERO
 	player.health.set_maximum(player.stats.max_hp, true)
+	player.hitbox_root.set_hurtboxes_enabled(true)
 	player.camera.snap_to_target()
+
+
+## Put back the blob this level is holding, if any. Called on entry and after a
+## death, so it survives a restart, a hub trip and a relaunch.
+func _restore_death_blob() -> void:
+	if level_id == "":
+		return
+	var blob: Variant = SaveManager.death_blob(level_id)
+	if blob == null:
+		return
+	var record: Dictionary = blob as Dictionary
+	var pickup: Pickups.DeathBlob = Pickups.DeathBlob.create(int(record["amount"]), level_id)
+	pickup.position = Vector2(float(record["x"]), float(record["y"]))
+	add_child(pickup)
+
+
+func _clear_blobs() -> void:
+	for child: Node in get_children():
+		if child is Pickups.DeathBlob:
+			remove_child(child)
+			child.queue_free()
 
 
 func mark_completed() -> void:

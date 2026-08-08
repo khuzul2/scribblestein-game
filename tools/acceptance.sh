@@ -163,9 +163,30 @@ m4() {
   done
 }
 
+# --------------------------------------------------------------------------- M5
+
+m5() {
+  echo "M5 — Economy, Death & Save"
+  local output
+  output="$(timeout 900 "$GODOT" --headless -s tools/run_tests.gd -- economy 2>&1)"
+  if [ $? -eq 0 ]; then
+    pass "economy: corpse run, pity timer, duplicate conversion, Correction Fluid"
+  else
+    fail "economy: corpse run, pity timer, duplicate conversion, Correction Fluid"
+    echo "$output" | tail -30
+  fi
+  output="$(timeout 900 "$GODOT" --headless -s tools/run_tests.gd -- save 2>&1)"
+  if [ $? -eq 0 ]; then
+    pass "save: atomic writes, migration and round trips"
+  else
+    fail "save: atomic writes, migration and round trips"
+    echo "$output" | tail -30
+  fi
+}
+
 # --------------------------------------------------------------------------- run
 # Add each milestone's function name here as it lands.
-MILESTONES=(m0 m2 m3 m4)
+MILESTONES=(m0 m2 m3 m4 m5)
 
 for milestone in "${MILESTONES[@]}"; do
   if wanted "${milestone^^}" || [ ${#SELECTED[@]} -eq 0 ]; then
