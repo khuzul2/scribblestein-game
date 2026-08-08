@@ -64,6 +64,57 @@ func refresh() -> void:
 		child.queue_free()
 	for level_id: String in Config.map_level_ids():
 		_list.add_child(_row(level_id))
+	_add_your_own()
+
+
+## Levels that exist as files but are not on the shipped map: anything drawn in
+## the editor. Without this the editor would be half a feature — you could make
+## a level and then have nowhere to play it from.
+func _add_your_own() -> void:
+	var mine: PackedStringArray = PackedStringArray()
+	for level_id: String in LevelData.catalogue():
+		if not Config.levels.has(level_id):
+			mine.append(level_id)
+	if mine.is_empty():
+		return
+
+	_list.add_child(Paper.spacer(24))
+	_list.add_child(Paper.label("YOUR OWN", 24, Paper.FADED))
+	for level_id: String in mine:
+		_list.add_child(_own_row(level_id))
+
+
+func _own_row(level_id: String) -> Control:
+	var problems: PackedStringArray = PackedStringArray()
+	var level: LevelData = LevelData.load_from(LevelData.find(level_id), problems)
+
+	var frame: PanelContainer = PanelContainer.new()
+	frame.add_theme_stylebox_override("panel", Paper.panel())
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 20)
+	frame.add_child(row)
+
+	var text: VBoxContainer = VBoxContainer.new()
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.add_child(Paper.label(level.name if level != null else level_id, 30))
+	text.add_child(Paper.label(
+		"drawn here" if level != null else "will not open: %s" % ", ".join(problems),
+		17, Paper.FADED))
+	row.add_child(text)
+
+	var edit: Button = Paper.button("EDIT", 24)
+	edit.pressed.connect(func() -> void:
+		Audio.sfx("sfx_ui_page_turn")
+		editor_requested.emit(level_id))
+	row.add_child(edit)
+
+	var enter: Button = Paper.button("ENTER", 24)
+	enter.disabled = level == null
+	enter.pressed.connect(func() -> void:
+		Audio.sfx("sfx_ui_click_scratch")
+		level_chosen.emit(level_id))
+	row.add_child(enter)
+	return frame
 
 
 func _row(level_id: String) -> Control:
