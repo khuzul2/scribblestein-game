@@ -85,3 +85,39 @@ override. The intent is fully achievable, so this is a mapping, not a conflict:
   `detect_3d/compress_to=0`, so no pixel is ever resampled or block-compressed.
 
 `tools/validate_assets.gd` checks all three, per-file and project-wide.
+
+---
+
+## D4 — the Light weight class is unreachable with the shipped part catalogue
+
+- **Waiver id:** none — reported as a boot warning
+  (`weight_class_unreachable:biped:light`), which disappears the moment the data
+  makes Light reachable.
+- **Status:** OPEN — playable, but one third of DESIGN §5 is currently dead content.
+
+**Conflict.** `DESIGN.md §5` and `game_config.json → movement.weight_classes.light`
+define Light as `0–25` total weight: *"Fast, floaty, high jump, weak knockback
+resistance"*. But `torso` and `legs` are both required slots, and the lightest
+legal pair in `parts_db.json` is `torso_ribby` (20) + `legs_scribble_sprint` (8)
+**= 28**. No legal biped can weigh 25 or less, so no player will ever be Light,
+and `light`'s whole preset — `max_speed 340`, `jump_velocity -880`,
+`knockback_taken_mult 1.3` — is unreachable.
+
+**Options.**
+1. Raise `light.max_total_weight` from 25 to ~30. One number, no part churn; the
+   starter build immediately becomes Light, which changes the game's opening feel
+   from "baseline" to "fast and floaty".
+2. Add a light torso (weight ≤ 17) to the catalogue. *Agent's recommendation* —
+   it keeps the starter build Medium as DESIGN §5 implies ("Medium: baseline
+   platforming feel") and makes Light something you *build towards*, which is the
+   point of the part economy. Costs one new part + art.
+3. Cut `torso_ribby` from 20 to 17. Cheapest, but it re-tunes the default build
+   rather than adding a choice.
+
+**Current behaviour.** Nothing is blocked — the class boundaries, presets and
+movement code all work; `tests/test_movement.gd` proves the Light preset drives
+the jump apex correctly by forcing the class. The boot warning names the lightest
+legal build and the ceiling it misses, so the fix is a one-line data edit
+whenever a human picks an option.
+
+---

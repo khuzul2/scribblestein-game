@@ -37,6 +37,7 @@ static func validate(data: Dictionary, waivers: Dictionary = {}) -> Array[Dictio
 	_check_parts_cross_refs(data, issues)
 	_check_enemies(data, issues)
 	_check_game_config(data, issues)
+	_check_weight_classes_are_reachable(data, issues)
 
 	for issue: Dictionary in issues:
 		if waivers.has(issue["id"]):
@@ -341,6 +342,59 @@ static func _check_game_config(data: Dictionary, issues: Array[Dictionary]) -> v
 			_add(issues, SEVERITY_ERROR, "config_boil_fps",
 				"data/game_config.json /line_boil/boil_fps: %s is outside boil_fps_range %s"
 				% [fps, str(boil_range)])
+
+
+## DESIGN §5 promises three playable weight classes. If the lightest legal
+## assembly cannot reach a band, that band is dead content — worth saying out
+## loud rather than discovering it in a playtest.
+static func _check_weight_classes_are_reachable(data: Dictionary, issues: Array[Dictionary]) -> void:
+	var parts: Dictionary = _parts(data)
+	var blueprints: Dictionary = _blueprints(data)
+	var classes: Dictionary = _dig(data.get("game_config", {}),
+		PackedStringArray(["movement", "weight_classes"])) as Dictionary
+	if classes.is_empty() or parts.is_empty():
+		return
+
+	for blueprint_id: Variant in blueprints:
+		var blueprint: Dictionary = blueprints[blueprint_id] as Dictionary
+		if str(blueprint.get("status", "")).begins_with("STUB"):
+			continue
+		var slots: Dictionary = blueprint.get("slots", {}) as Dictionary
+
+		var lightest_total: float = 0.0
+		var lightest_build: PackedStringArray = PackedStringArray()
+		for slot_id: Variant in slots:
+			if not bool((slots[slot_id] as Dictionary).get("required", false)):
+				continue
+			var best_id: String = ""
+			var best_weight: float = INF
+			for part_id: Variant in parts:
+				var part: Dictionary = parts[part_id] as Dictionary
+				if str(part.get("slot", "")) != str(slot_id):
+					continue
+				if not (part.get("fits_blueprints", []) as Array).has(blueprint_id):
+					continue
+				if float(part.get("weight", 0.0)) < best_weight:
+					best_weight = float(part.get("weight", 0.0))
+					best_id = str(part_id)
+			if best_id != "":
+				lightest_total += best_weight
+				lightest_build.append("%s (%d)" % [best_id, int(best_weight)])
+
+		var lightest_class: String = ""
+		for candidate: String in ["light", "medium", "heavy"]:
+			if classes.has(candidate) \
+					and lightest_total <= float((classes[candidate] as Dictionary).get("max_total_weight", 0.0)):
+				lightest_class = candidate
+				break
+
+		for candidate: String in ["light", "medium", "heavy"]:
+			if candidate == lightest_class:
+				break
+			_add(issues, SEVERITY_WARNING, "weight_class_unreachable:%s:%s" % [blueprint_id, candidate],
+				"data/game_config.json /movement/weight_classes/%s: unreachable on blueprint '%s'. The lightest legal build is %s = %d, past this class' ceiling of %d."
+				% [candidate, blueprint_id, ", ".join(lightest_build), int(lightest_total),
+					int((classes[candidate] as Dictionary).get("max_total_weight", 0.0))])
 
 
 # --- helpers -------------------------------------------------------------------

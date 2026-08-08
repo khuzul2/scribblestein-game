@@ -115,9 +115,25 @@ PY
   fi
 }
 
+# --------------------------------------------------------------------------- M2
+
+m2() {
+  echo "M2 — Locomotion & Camera"
+  local output suite
+  for suite in movement camera; do
+    output="$(timeout 900 "$GODOT" --headless -s tools/run_tests.gd -- "$suite" 2>&1)"
+    if [ $? -eq 0 ]; then
+      pass "$suite: measurements match the formulas in game_config.json"
+    else
+      fail "$suite: measurements match the formulas in game_config.json"
+      echo "$output" | tail -30
+    fi
+  done
+}
+
 # --------------------------------------------------------------------------- run
 # Add each milestone's function name here as it lands.
-MILESTONES=(m0)
+MILESTONES=(m0 m2)
 
 for milestone in "${MILESTONES[@]}"; do
   if wanted "${milestone^^}" || [ ${#SELECTED[@]} -eq 0 ]; then

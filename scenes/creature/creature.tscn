@@ -1,13 +1,19 @@
-[gd_scene load_steps=7 format=3 uid="uid://cscribbcreature"]
+[gd_scene load_steps=11 format=3 uid="uid://cscribbcreature"]
 
 [ext_resource type="Script" path="res://scripts/creature/creature.gd" id="1_creature"]
 [ext_resource type="Script" path="res://scripts/creature/hitbox_root.gd" id="2_hitboxroot"]
 [ext_resource type="Script" path="res://scripts/creature/health.gd" id="3_health"]
 [ext_resource type="Script" path="res://scripts/creature/attack_controller.gd" id="4_attack"]
 [ext_resource type="Script" path="res://scripts/creature/weight_class.gd" id="5_weight"]
+[ext_resource type="Script" path="res://scripts/creature/locomotion.gd" id="6_locomotion"]
+[ext_resource type="Script" path="res://scripts/creature/player_input.gd" id="7_input"]
+[ext_resource type="Script" path="res://scripts/creature/creature_camera.gd" id="8_camera"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(80, 160)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_climb"]
+size = Vector2(92, 160)
 
 [node name="Creature" type="CharacterBody2D"]
 script = ExtResource("1_creature")
@@ -17,6 +23,14 @@ script = ExtResource("1_creature")
 [node name="BodyCollider" type="CollisionShape2D" parent="."]
 position = Vector2(0, -80)
 shape = SubResource("RectangleShape2D_body")
+
+[node name="ClimbSensor" type="Area2D" parent="."]
+monitoring = true
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ClimbSensor"]
+position = Vector2(0, -80)
+shape = SubResource("RectangleShape2D_climb")
 
 [node name="HitboxRoot" type="Node2D" parent="."]
 script = ExtResource("2_hitboxroot")
@@ -29,3 +43,12 @@ script = ExtResource("4_attack")
 
 [node name="WeightClass" type="Node" parent="."]
 script = ExtResource("5_weight")
+
+[node name="PlayerInput" type="Node" parent="."]
+script = ExtResource("7_input")
+
+[node name="Locomotion" type="Node" parent="."]
+script = ExtResource("6_locomotion")
+
+[node name="CreatureCamera" type="Camera2D" parent="."]
+script = ExtResource("8_camera")

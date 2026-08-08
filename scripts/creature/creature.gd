@@ -11,6 +11,9 @@ signal assembled(stats: CreatureStats)
 signal assembly_failed(problems: PackedStringArray)
 signal facing_changed(facing: int)
 
+## How far past the body box the climb sensor reaches, in pixels.
+const CLIMB_SENSOR_MARGIN_PX: float = 6.0
+
 @export var blueprint_id: String = "biped"
 @export var is_player: bool = false
 
@@ -20,6 +23,10 @@ signal facing_changed(facing: int)
 @onready var attack_controller: AttackController = $AttackController
 @onready var weight_class: WeightClass = $WeightClass
 @onready var body_collider: CollisionShape2D = $BodyCollider
+@onready var locomotion: Locomotion = $Locomotion
+@onready var player_input: PlayerInput = $PlayerInput
+@onready var camera: CreatureCamera = $CreatureCamera
+@onready var climb_sensor: Area2D = $ClimbSensor
 
 var stats: CreatureStats = CreatureStats.new()
 
@@ -36,6 +43,10 @@ var facing: int = 1:
 		facing_changed.emit(facing)
 
 var _visual_bounds: Rect2 = Rect2()
+var _crouched: bool = false
+## Where the feet sit while standing, in creature-local space. The crouch squash
+## pivots on this so the soles never leave the floor.
+var _standing_feet_y: float = 0.0
 
 
 func _ready() -> void:
@@ -46,6 +57,9 @@ func _ready() -> void:
 		Layers.PLAYER_BODY, Layers.ENEMY_BODY])
 	health.is_player = is_player
 	attack_controller.setup(hitbox_root)
+	climb_sensor.collision_layer = 0
+	climb_sensor.collision_mask = Layers.bit(Layers.CLIMBABLE)
+	health.died.connect(func() -> void: attack_controller.cancel())
 
 
 ## Build this creature from a loadout. Returns the problems found, empty on
@@ -80,6 +94,30 @@ func has_effect(effect_id: String) -> bool:
 	return stats.has_effect(effect_id)
 
 
+## Squash the whole rig vertically while crouching. Scaling the skeleton takes
+## the sprites, the bone-local hurtboxes and (via the refit) the body collider
+## with it in one move, which is exactly what `crouch.hurtbox_height_mult` asks
+## for — and it reads as a cartoon squash, which suits a doodle.
+##
+## The squash pivots on the *feet*, not on the creature origin. Pivoting on the
+## origin would lift the soles off the floor, the creature would read as airborne
+## for a frame, crouch would drop, and the whole thing would chatter at 30 Hz.
+func set_crouched(crouched: bool) -> void:
+	if crouched == _crouched:
+		return
+	_crouched = crouched
+	var squash: float = Config.cfg_float("movement.crouch.hurtbox_height_mult") \
+		if crouched else 1.0
+	skeleton.scale.y = squash
+	skeleton.position.y = _standing_feet_y * (1.0 - squash)
+	_fit_body_collider()
+	_recompute_visual_bounds()
+
+
+func is_crouched() -> bool:
+	return _crouched
+
+
 ## Visual bounding box in creature-local space, recomputed on every assembly.
 ## The camera zooms off its height (Mandate A4, TECH_SPEC §6).
 func visual_bounds() -> Rect2:
@@ -104,6 +142,23 @@ func _fit_body_collider() -> void:
 		body_collider.shape = shape
 	shape.size = union.size
 	body_collider.position = union.get_center()
+	if not _crouched:
+		_standing_feet_y = union.end.y
+	_fit_climb_sensor(union)
+
+
+## The climb sensor is the body box grown slightly outwards, so a creature that
+## is *touching* a climbable wall registers it without needing to overlap.
+func _fit_climb_sensor(union: Rect2) -> void:
+	if climb_sensor == null:
+		return
+	var shape_node: CollisionShape2D = climb_sensor.get_node("CollisionShape2D") as CollisionShape2D
+	var shape: RectangleShape2D = shape_node.shape as RectangleShape2D
+	if shape == null:
+		shape = RectangleShape2D.new()
+		shape_node.shape = shape
+	shape.size = union.size + Vector2(CLIMB_SENSOR_MARGIN_PX * 2.0, 0.0)
+	climb_sensor.position = union.get_center()
 
 
 func _recompute_visual_bounds() -> void:

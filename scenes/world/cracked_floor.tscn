@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://cscribbcrackedfloor"]
+
+[ext_resource type="Script" path="res://scripts/world/cracked_floor.gd" id="1_cracked"]
+[ext_resource type="Texture2D" path="res://assets/tiles/tile_cracked.png" id="2_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_crack"]
+size = Vector2(128, 128)
+
+[node name="CrackedFloor" type="StaticBody2D"]
+script = ExtResource("1_cracked")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_crack")
