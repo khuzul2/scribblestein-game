@@ -1,0 +1,151 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Scribblestein level",
+  "_comment": [
+    "One file per level under res://data/levels/, plus whatever the editor has",
+    "saved to user://levels/. Everything a level is lives here: geometry,",
+    "inhabitants, rewards, signage and soundtrack. Nothing about a level is",
+    "authored in GDScript (Mandate B1/B4) -- scripts/world/data_level.gd builds",
+    "any of these, and the editor writes them.",
+    "",
+    "Coordinates are world pixels, +Y down, exactly as the game sees them, so a",
+    "number in this file can be compared directly against a jump reach."
+  ],
+  "type": "object",
+  "required": ["schema", "id", "name", "spawn", "terrain"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+    "name": { "type": "string", "minLength": 1 },
+    "order": { "type": "integer", "minimum": 0 },
+    "requires": { "type": "array", "items": { "type": "string" } },
+    "keys": {
+      "_comment": "Effects this level is gated on, for the world map's summary.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "spawn": { "$ref": "#/definitions/point" },
+    "terrain": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/terrain" }
+    },
+    "ropes": { "type": "array", "items": { "$ref": "#/definitions/rope" } },
+    "enemies": { "type": "array", "items": { "$ref": "#/definitions/enemy" } },
+    "pickups": { "type": "array", "items": { "$ref": "#/definitions/pickup" } },
+    "doors": { "type": "array", "items": { "$ref": "#/definitions/door" } },
+    "signs": { "type": "array", "items": { "$ref": "#/definitions/sign" } },
+    "music": { "$ref": "#/definitions/music" }
+  },
+  "definitions": {
+    "point": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "type": "number" }
+    },
+    "terrain": {
+      "_comment": [
+        "A free-form polygon. `kind` picks the physics layer and the tile it is",
+        "painted with; the outline is exactly what the player collides with, so",
+        "what you draw is what you hit."
+      ],
+      "type": "object",
+      "required": ["kind", "points"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": ["solid", "oneway", "climbable", "cracked", "hazard"]
+        },
+        "points": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "$ref": "#/definitions/point" }
+        }
+      }
+    },
+    "rope": {
+      "_comment": "A climbable line hanging from `at`, `length` pixels long.",
+      "type": "object",
+      "required": ["at", "length"],
+      "additionalProperties": false,
+      "properties": {
+        "at": { "$ref": "#/definitions/point" },
+        "length": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "enemy": {
+      "type": "object",
+      "required": ["id", "at"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "at": { "$ref": "#/definitions/point" },
+        "facing": { "enum": [-1, 1] },
+        "patrol": {
+          "_comment": "Half-width of the patrol beat, in pixels. 0 stands still.",
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "pickup": {
+      "type": "object",
+      "required": ["kind", "at"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["ink", "sketch", "fluid"] },
+        "at": { "$ref": "#/definitions/point" },
+        "amount": { "type": "integer", "minimum": 1 },
+        "part": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "sketch" } } },
+          "then": { "required": ["part"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "ink" } } },
+          "then": { "required": ["amount"] }
+        }
+      ]
+    },
+    "door": {
+      "type": "object",
+      "required": ["kind", "at"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["exit"] },
+        "at": { "$ref": "#/definitions/point" }
+      }
+    },
+    "sign": {
+      "type": "object",
+      "required": ["at", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "at": { "$ref": "#/definitions/point" },
+        "text": { "type": "string", "minLength": 1 },
+        "size": { "type": "integer", "minimum": 8 }
+      }
+    },
+    "music": {
+      "_comment": [
+        "Up to five tracks per level. `tracks` are file names inside",
+        "user://music/<level id>/ -- the editor copies whatever you pick there,",
+        "so a level stays portable and the audio stays out of the repository."
+      ],
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tracks": {
+          "type": "array",
+          "maxItems": 5,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "shuffle": { "type": "boolean" },
+        "crossfade_seconds": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

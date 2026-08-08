@@ -9,6 +9,7 @@ extends Control
 
 signal closed
 signal level_chosen(level_id: String)
+signal editor_requested(level_id: String)
 
 var _list: VBoxContainer = null
 
@@ -31,6 +32,12 @@ func _ready() -> void:
 	root.add_child(header)
 	header.add_child(Paper.label("THE MAP TABLE", 40))
 	header.add_child(Paper.spacer())
+
+	var edit: Button = Paper.button("LEVEL EDITOR", 24)
+	edit.pressed.connect(func() -> void:
+		Audio.sfx("sfx_ui_page_turn")
+		editor_requested.emit(""))
+	header.add_child(edit)
 
 	var back: Button = Paper.button("BACK", 24)
 	back.pressed.connect(func() -> void:

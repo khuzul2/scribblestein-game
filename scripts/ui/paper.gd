@@ -54,6 +54,50 @@ static func style_button(button: Button, font_size: int = 22) -> void:
 	button.add_theme_font_size_override("font_size", font_size)
 
 
+## Ink-on-paper for the widgets the Lab never needed but the level editor does —
+## text fields, drop-downs, spinners, tick boxes. Built as a `Theme` and applied
+## once at the root rather than per control, because a control created later
+## (a panel rebuilt when the selection changes) must not arrive wearing Godot's
+## default grey. Grey is not in the palette (Mandate A1).
+static func control_theme() -> Theme:
+	var theme: Theme = Theme.new()
+	var flat: StyleBoxFlat = panel(BORDER_WIDTH - 1)
+	flat.set_content_margin_all(PADDING / 2)
+
+	for control: String in ["LineEdit", "OptionButton", "SpinBox", "Button",
+			"CheckBox", "PopupMenu", "ScrollContainer", "PanelContainer"]:
+		theme.set_type_variation(control, control)
+
+	for control: String in ["LineEdit", "OptionButton", "PopupMenu"]:
+		for state: String in ["normal", "focus", "hover", "pressed", "panel"]:
+			theme.set_stylebox(state, control, flat)
+		theme.set_color("font_color", control, INK)
+		theme.set_color("font_selected_color", control, PAPER)
+		theme.set_color("font_hover_color", control, INK)
+		theme.set_color("caret_color", control, INK)
+		theme.set_color("selection_color", control, INK)
+
+	theme.set_stylebox("normal", "Button", panel())
+	theme.set_stylebox("hover", "Button", inverted_panel())
+	theme.set_stylebox("pressed", "Button", inverted_panel())
+	theme.set_stylebox("disabled", "Button", panel(1))
+	theme.set_color("font_color", "Button", INK)
+	theme.set_color("font_hover_color", "Button", PAPER)
+	theme.set_color("font_pressed_color", "Button", PAPER)
+	theme.set_color("font_disabled_color", "Button", FADED)
+
+	theme.set_color("font_color", "CheckBox", INK)
+	theme.set_color("font_hover_color", "CheckBox", INK)
+	theme.set_color("font_pressed_color", "CheckBox", INK)
+	for state: String in ["normal", "hover", "pressed", "focus"]:
+		theme.set_stylebox(state, "CheckBox", blank())
+
+	theme.set_color("font_color", "Label", INK)
+	theme.set_stylebox("panel", "Panel", panel())
+	theme.set_stylebox("panel", "PanelContainer", panel())
+	return theme
+
+
 static func style_label(label: Label, font_size: int = 22, colour: Color = INK) -> void:
 	label.add_theme_color_override("font_color", colour)
 	label.add_theme_font_size_override("font_size", font_size)

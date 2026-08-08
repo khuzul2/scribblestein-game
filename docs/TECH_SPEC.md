@@ -145,6 +145,60 @@ Unlocking a blueprint also grants every zero-cost part that fits it
 (`Config.free_part_ids`), because a body type whose required slots have no
 affordable part would be dead on arrival.
 
+## 8b. Level Files (`data/levels/<id>.json`, `user://levels/<id>.json`)
+
+One file per level, schema in `data/level.schema.json`. A level is data: geometry,
+inhabitants, rewards, signage and soundtrack, in world pixels with +Y down, so a
+number in the file compares directly against a jump reach.
+
+```json
+{
+  "schema": 1,
+  "id": "level_01_margins",
+  "name": "The Margins",
+  "order": 1,
+  "spawn": [-420, -80],
+  "terrain": [{ "kind": "solid", "points": [[0,0], [400,0], [400,200]] }],
+  "ropes":   [{ "at": [900, -600], "length": 500 }],
+  "enemies": [{ "id": "enemy_scribble_grunt", "at": [620, -120],
+                "facing": -1, "patrol": 420 }],
+  "pickups": [{ "kind": "ink", "at": [400, -60], "amount": 15 }],
+  "doors":   [{ "kind": "exit", "at": [5500, 1420] }],
+  "signs":   [{ "at": [0, -300], "text": "mind the gap" }],
+  "music":   { "tracks": ["intro.ogg"], "shuffle": false, "crossfade_seconds": 1.5 }
+}
+```
+
+**Terrain** is free-form polygons, not tiles. `kind` picks the physics layer and
+the tile texture in one: `solid` · `oneway` (solid from above only) · `climbable`
+(solid, plus a `climbable` marker area) · `cracked` · `hazard` (an area that
+hurts, not a body that stops you). The outline you draw is the outline you
+collide with.
+
+**Where they live.** `res://data/levels/` ships with the game;
+`user://levels/` is what the editor writes in an exported build.
+`LevelData.find` prefers the user copy, so an edited level shadows the shipped
+one rather than replacing it.
+
+**Loading.** `DataLevel` (a `PlayScene`) builds any of these. `Game.goto_level`
+prefers a level file over a hand-coded scene, so porting a level to the editor's
+format is a matter of writing the file.
+
+**Proving a level.** Hand-coded levels had their gaps as GDScript constants to
+compare against `JumpMath`. Drawn ones do not, so `LevelGeometry` recovers the
+same numbers from the polygons — walkable surfaces, gaps and their drops,
+head-room, and a conservative walk-and-jump reachability sweep from the spawn to
+the exit. That is what keeps DESIGN §9's lock-and-key promise checkable now that
+levels are drawn rather than typed.
+
+**Soundtracks.** `music.tracks` are file names inside
+`user://music/<level id>/`, capped at five by the schema. The editor copies
+whatever the player picks into that folder, so a level file stays small and
+portable and the audio stays out of the repository. `MusicDirector` loads them
+at runtime (`.ogg` / `.mp3` / `.wav`) — they arrive after the game is built, so
+the importer never sees them. A missing track is skipped with a named warning,
+never a crash.
+
 ## 9. JSON Loading Rules (Mandate B1)
 
 - `json_loader.gd` loads `data/*.json` at boot into a read-only `Config` singleton.

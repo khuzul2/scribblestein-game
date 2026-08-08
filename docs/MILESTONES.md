@@ -155,6 +155,18 @@ updated.
 **AC:** every earlier milestone's AC still passes; Level 01 plays identically
 from data; the autopilot clears it.
 
+---
+
+## Backlog note on the hand-coded level
+
+`scripts/levels/level_01_margins.gd` stays in the repository after M11 even
+though the game now loads `data/levels/level_01_margins.json` instead. It is
+where the gate dimensions are declared and reasoned about, and
+`tools/export_level_01.gd` regenerates the level file from it — so the two are
+checked against each other in acceptance rather than allowed to drift. Deleting
+it would mean losing the written derivation of why the glide ledge hangs where
+it does.
+
 ## Backlog (explicitly not scheduled)
 Asymmetric arm slots · mid-level rebuild stations · checkpoints inside levels ·
 input rebinding UI · pre-baked boil frames for hero parts · third blueprint ·

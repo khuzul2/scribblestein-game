@@ -19,6 +19,7 @@ boot_splash/bg_color=Color(0.956863, 0.941176, 0.901961, 1)
 Config="*res://scripts/core/config.gd"
 SaveManager="*res://scripts/core/save_manager.gd"
 Audio="*res://scripts/core/audio.gd"
+MusicDirector="*res://scripts/core/music_director.gd"
 DevTools="*res://scripts/core/dev_tools.gd"
 
 [debug]

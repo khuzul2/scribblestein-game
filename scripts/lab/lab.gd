@@ -12,6 +12,7 @@ extends Control
 ## is a loadout commitment.
 
 signal level_requested(level_id: String)
+signal editor_requested(level_id: String)
 signal scratchpad_requested
 
 const SCRATCHPAD_LEVEL_ID: String = "scratchpad"
@@ -23,6 +24,8 @@ var world_map: WorldMap = null
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# The hub has its own loop; whatever a level was playing stops at the door.
+	MusicDirector.stop()
 	Audio.music("mus_lab_loop")
 
 	editor = SketchbookEditor.new()
@@ -46,6 +49,8 @@ func _ready() -> void:
 	add_child(world_map)
 	world_map.closed.connect(_show.bind("editor"))
 	world_map.level_chosen.connect(_on_level_chosen)
+	world_map.editor_requested.connect(func(level_id: String) -> void:
+		editor_requested.emit(level_id))
 
 
 func _show(station: String) -> void:

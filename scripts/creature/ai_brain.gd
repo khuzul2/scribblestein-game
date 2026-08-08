@@ -30,6 +30,12 @@ var state: State = State.PATROL
 var ai: Dictionary = {}
 var profile: String = "ground_chaser"
 
+## Where this enemy was placed, and how far either side of it it will walk.
+## Set by the level; `patrol_half_width` of 0 means "wander until something
+## stops you", which is what an enemy dropped into a level with no beat does.
+var patrol_origin: Vector2 = Vector2.INF
+var patrol_half_width: float = 0.0
+
 var _cooldown_remaining: float = 0.0
 var _patrol_direction: float = 1.0
 var _repath_remaining: float = 0.0
@@ -127,12 +133,22 @@ func _has_line_of_sight() -> bool:
 # --- behaviours ----------------------------------------------------------------
 
 func _patrol(intent: MovementIntent) -> void:
-	if _blocked_ahead() or _ledge_ahead():
+	if _blocked_ahead() or _ledge_ahead() or _past_its_beat():
 		_patrol_direction = -_patrol_direction
 	intent.move_axis = _axis_for_speed(patrol_speed()) * _patrol_direction
 	# A wall patroller keeps climbing while it has a wall to climb.
 	if creature.has_effect("can_climb") and locomotion.touching_climbable():
 		intent.climb_held = true
+
+
+## True when the enemy has walked past the end of the beat it was given. An
+## enemy placed to guard a doorway should still be near the doorway a minute
+## later, which a wall-to-wall patrol does not guarantee on open ground.
+func _past_its_beat() -> bool:
+	if patrol_half_width <= 0.0 or patrol_origin == Vector2.INF:
+		return false
+	var offset: float = creature.global_position.x - patrol_origin.x
+	return absf(offset) > patrol_half_width and signf(offset) == signf(_patrol_direction)
 
 
 func _chase(intent: MovementIntent) -> void:

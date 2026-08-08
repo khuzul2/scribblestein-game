@@ -47,6 +47,10 @@ func _ready() -> void:
 			goto_level(requested)
 		elif requested == "lab":
 			goto_lab()
+		elif requested == "editor":
+			goto_editor(str(DevTools.option("level")) if DevTools.has_option("level") else "")
+		elif LevelData.find(requested) != "":
+			goto_level(requested)
 		else:
 			push_error("Unknown --scene='%s'. Known: %s, lab, %s" % [requested,
 				", ".join(PackedStringArray(DEV_SCENES.keys())),
@@ -64,18 +68,61 @@ func goto_lab() -> void:
 		return
 	lab.scratchpad_requested.connect(func() -> void: goto_level(Lab.SCRATCHPAD_LEVEL_ID))
 	lab.level_requested.connect(goto_level)
+	lab.editor_requested.connect(goto_editor)
 
 
+## Enter a level. A level file under `data/levels/` wins over a hand-coded
+## scene, so porting a level to the editor's format is a matter of writing the
+## file — and a level someone edits shadows the shipped copy without replacing
+## it (`LevelData.find`).
 func goto_level(level_id: String) -> void:
-	if not Config.levels.has(level_id):
-		push_error("No level '%s' in data/levels.json" % level_id)
+	var scene: PlayScene = null
+	if LevelData.find(level_id) != "":
+		var problems: PackedStringArray = PackedStringArray()
+		var data_level: DataLevel = DataLevel.create(level_id, problems)
+		if data_level == null:
+			push_error("Cannot open level '%s': %s" % [level_id, ", ".join(problems)])
+			return
+		scene = await _transition_to_node(level_id, data_level) as PlayScene
+	elif Config.levels.has(level_id):
+		scene = await _transition_to(level_id, str(Config.level(level_id)["scene"])) as PlayScene
+	else:
+		push_error("No level '%s' — neither a level file nor an entry in data/levels.json"
+			% level_id)
 		return
-	var scene_path: String = str(Config.level(level_id)["scene"])
-	var scene: PlayScene = await _transition_to(level_id, scene_path) as PlayScene
 	if scene == null:
 		return
 	scene.level_id = level_id
 	scene.exit_requested.connect(func() -> void: goto_lab())
+
+
+## Open the level editor. Playtesting from inside it enters the level for real
+## and comes back here, so the round trip is one button each way.
+func goto_editor(level_id: String = "") -> void:
+	var editor: LevelEditor = LevelEditor.new()
+	editor.name = "LevelEditor"
+	var opened: LevelEditor = await _transition_to_node("editor", editor) as LevelEditor
+	if opened == null:
+		return
+	if level_id != "":
+		opened.open(level_id)
+	opened.closed.connect(func() -> void: goto_lab())
+	opened.playtest_requested.connect(func(level: LevelData) -> void:
+		_playtest(level.id))
+
+
+## Play a level from the editor, and return to the editor on the way out rather
+## than to the Lab — a playtest is part of editing, not a trip to the hub.
+func _playtest(level_id: String) -> void:
+	var problems: PackedStringArray = PackedStringArray()
+	var data_level: DataLevel = DataLevel.create(level_id, problems)
+	if data_level == null:
+		push_error("Cannot playtest '%s': %s" % [level_id, ", ".join(problems)])
+		return
+	var scene: PlayScene = await _transition_to_node(level_id, data_level) as PlayScene
+	if scene == null:
+		return
+	scene.exit_requested.connect(func() -> void: goto_editor(level_id))
 
 
 ## Swap the active scene. `scene_id` is a stable key used by save data and the
@@ -95,6 +142,33 @@ func is_busy() -> bool:
 	return _switching
 
 
+## Swap in a node built in code rather than loaded from a `.tscn` — which is
+## what a data level and the editor are.
+func _transition_to_node(scene_id: String, node: Node) -> Node:
+	while _switching:
+		await get_tree().process_frame
+	_switching = true
+
+	await _fade_to(1.0)
+	_clear_current()
+
+	_current = node
+	scene_root.add_child(_current)
+	current_scene_id = scene_id
+	scene_changed.emit(scene_id)
+
+	await _fade_to(0.0)
+	_switching = false
+	return _current
+
+
+func _clear_current() -> void:
+	if _current != null:
+		scene_root.remove_child(_current)
+		_current.queue_free()
+		_current = null
+
+
 func _transition_to(scene_id: String, path: String) -> Node:
 	# Queue behind any transition already running rather than dropping the
 	# request — a click during a fade should still take you where you asked.
@@ -104,10 +178,7 @@ func _transition_to(scene_id: String, path: String) -> Node:
 
 	await _fade_to(1.0)
 
-	if _current != null:
-		scene_root.remove_child(_current)
-		_current.queue_free()
-		_current = null
+	_clear_current()
 
 	var packed: PackedScene = load(path) as PackedScene
 	if packed == null:

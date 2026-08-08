@@ -252,9 +252,112 @@ m7() {
   fi
 }
 
+# --------------------------------------------------------------------------- M8-M10
+
+m8() {
+  echo "M8 — Godot 4.7.1 & decision resolutions"
+  local output
+  output="$(timeout 900 "$GODOT" --headless -s tools/run_tests.gd -- decisions 2>&1)"
+  if [ $? -eq 0 ]; then
+    pass "every ruling in DECISIONS_NEEDED.md still holds"
+  else
+    fail "every ruling in DECISIONS_NEEDED.md still holds"
+    echo "$output" | tail -30
+  fi
+
+  # AC: boot validation reports nothing at all -- no errors and no warnings.
+  output="$(boot)"
+  if [ $? -eq 0 ] && ! grep -qE "WAIVED|validation (warning|error)" <<<"$output"; then
+    pass "a clean boot raises no validation issues"
+  else
+    fail "a clean boot raises no validation issues"
+    echo "$output" | tail -20
+  fi
+}
+
+m9() {
+  echo "M9 — Crooked Quadruped"
+  local output
+  output="$(timeout 900 "$GODOT" --headless -s tools/run_tests.gd -- quadruped 2>&1)"
+  if [ $? -eq 0 ]; then
+    pass "the second body rigs, pounces, is bought, and keeps its own build"
+  else
+    fail "the second body rigs, pounces, is bought, and keeps its own build"
+    echo "$output" | tail -30
+  fi
+}
+
+m10() {
+  echo "M10 — The part catalogue"
+  local output suite
+  for suite in catalogue effects loadout_space; do
+    output="$(timeout 900 "$GODOT" --headless -s tools/run_tests.gd -- "$suite" 2>&1)"
+    if [ $? -eq 0 ]; then
+      pass "$suite: coverage, the new effects, and the reach search at scale"
+    else
+      fail "$suite: coverage, the new effects, and the reach search at scale"
+      echo "$output" | tail -30
+    fi
+  done
+}
+
+# --------------------------------------------------------------------------- M11
+
+m11() {
+  echo "M11 — Level editor"
+  local output suite
+  for suite in level_format data_level editor; do
+    output="$(timeout 900 "$GODOT" --headless -s tools/run_tests.gd -- "$suite" 2>&1)"
+    if [ $? -eq 0 ]; then
+      pass "$suite: the format, the loader, and the drawing tools"
+    else
+      fail "$suite: the format, the loader, and the drawing tools"
+      echo "$output" | tail -30
+    fi
+  done
+
+  # AC: the exported level file still describes the level the script builds.
+  output="$(timeout 300 "$GODOT" --headless -s tools/export_level_01.gd 2>&1)"
+  if [ $? -eq 0 ] && git diff --quiet -- data/levels/level_01_margins.json; then
+    pass "re-exporting Level 01 reproduces the committed level file"
+  else
+    fail "re-exporting Level 01 reproduces the committed level file"
+    git --no-pager diff --stat -- data/levels/level_01_margins.json
+  fi
+
+  # AC: the editor is drawn in the same two colours as everything else.
+  local user_dir
+  user_dir="$HOME/.local/share/godot/app_userdata/Scribblestein"
+  rm -f "$user_dir/palette_editor.png"
+  render 1920x1080 --scene=editor --level=level_01_margins \
+    --shot="user://palette_editor.png" --shot-after=60 >/dev/null
+  output="$(timeout 300 "$GODOT" --headless -s tools/verify_frames.gd -- \
+    --palette="user://palette_editor.png" 2>&1)"
+  if [ $? -eq 0 ]; then
+    pass "a full frame of the editor contains only palette colours"
+  else
+    fail "a full frame of the editor contains only palette colours"
+    grep -E '  - ' <<<"$output"
+  fi
+}
+
+# --------------------------------------------------------------------------- M12
+
+m12() {
+  echo "M12 — Soundtrack"
+  local output
+  output="$(timeout 900 "$GODOT" --headless -s tools/run_tests.gd -- soundtrack 2>&1)"
+  if [ $? -eq 0 ]; then
+    pass "five songs per level: import, order, shuffle, and surviving a lost file"
+  else
+    fail "five songs per level: import, order, shuffle, and surviving a lost file"
+    echo "$output" | tail -30
+  fi
+}
+
 # --------------------------------------------------------------------------- run
 # Add each milestone's function name here as it lands.
-MILESTONES=(m0 m2 m3 m4 m5 m6 m7)
+MILESTONES=(m0 m2 m3 m4 m5 m6 m7 m8 m9 m10 m11 m12)
 
 for milestone in "${MILESTONES[@]}"; do
   if wanted "${milestone^^}" || [ ${#SELECTED[@]} -eq 0 ]; then
