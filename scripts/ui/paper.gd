@@ -25,6 +25,9 @@ static func panel(border: int = BORDER_WIDTH, fill: Color = PAPER) -> StyleBoxFl
 	box.border_color = INK
 	box.set_border_width_all(border)
 	box.set_content_margin_all(PADDING)
+	# Godot anti-aliases StyleBoxFlat by default, which puts greys along every
+	# border it draws. There is no grey in this palette (Mandate A1).
+	box.anti_aliasing = false
 	return box
 
 
@@ -92,10 +95,59 @@ static func control_theme() -> Theme:
 	for state: String in ["normal", "hover", "pressed", "focus"]:
 		theme.set_stylebox(state, "CheckBox", blank())
 
+	# Godot's default widget glyphs — the drop-down arrow, the spinner arrows,
+	# the tick in a checkbox — are grey bitmaps. Replace them with 1-bit ones
+	# drawn here, so a widget stays legible without importing a colour the game
+	# does not have.
+	var empty: ImageTexture = _ink_icon(1, 1, [])
+	theme.set_icon("arrow", "OptionButton", _ink_arrow())
+	theme.set_icon("updown", "SpinBox", empty)
+	theme.set_icon("checked", "CheckBox", _ink_box(true))
+	theme.set_icon("unchecked", "CheckBox", _ink_box(false))
+	theme.set_icon("radio_checked", "CheckBox", _ink_box(true))
+	theme.set_icon("radio_unchecked", "CheckBox", _ink_box(false))
+	theme.set_icon("checked_disabled", "CheckBox", _ink_box(true))
+	theme.set_icon("unchecked_disabled", "CheckBox", _ink_box(false))
+
 	theme.set_color("font_color", "Label", INK)
 	theme.set_stylebox("panel", "Panel", panel())
 	theme.set_stylebox("panel", "PanelContainer", panel())
 	return theme
+
+
+## An icon of pure ink on full transparency — the only two values any UI glyph
+## in this game is allowed (Mandate A1).
+static func _ink_icon(width: int, height: int, pixels: Array[Vector2i]) -> ImageTexture:
+	var image: Image = Image.create(width, height, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 0, 0))
+	for point: Vector2i in pixels:
+		if point.x >= 0 and point.x < width and point.y >= 0 and point.y < height:
+			image.set_pixelv(point, INK)
+	return ImageTexture.create_from_image(image)
+
+
+## A tick box: outlined when off, filled when on.
+static func _ink_box(filled: bool) -> ImageTexture:
+	var side: int = 18
+	var pixels: Array[Vector2i] = []
+	for x: int in range(side):
+		for y: int in range(side):
+			var edge: bool = x < 2 or y < 2 or x >= side - 2 or y >= side - 2
+			var inside: bool = x >= 5 and y >= 5 and x < side - 5 and y < side - 5
+			if edge or (filled and inside):
+				pixels.append(Vector2i(x, y))
+	return _ink_icon(side, side, pixels)
+
+
+## A solid downward triangle for a drop-down.
+static func _ink_arrow() -> ImageTexture:
+	var width: int = 14
+	var height: int = 8
+	var pixels: Array[Vector2i] = []
+	for row: int in range(height):
+		for column: int in range(row, width - row):
+			pixels.append(Vector2i(column, row))
+	return _ink_icon(width, height, pixels)
 
 
 static func style_label(label: Label, font_size: int = 22, colour: Color = INK) -> void:

@@ -21,8 +21,11 @@ var level: LevelData = null
 var history: EditorHistory = EditorHistory.new()
 
 var _canvas: EditorCanvas = null
-var _camera: Camera2D = null
-var _world: SubViewport = null
+## Where the view is looking and how far in. The canvas draws with these; there
+## is no camera and no SubViewport, because compositing through one puts greys
+## on every line (Mandate A1).
+var _look_at: Vector2 = Vector2.ZERO
+var _zoom: float = 1.0
 var _panel: VBoxContainer = null
 var _status: Label = null
 var _title: Label = null
@@ -100,36 +103,23 @@ func _build() -> void:
 	root.add_child(_build_side_panel())
 
 
-## The drawing surface, inside a SubViewport so the world has its own camera and
-## the UI around it keeps screen coordinates.
+## The drawing surface. A plain Control that draws in world space through its
+## own transform — see `EditorCanvas` for why there is no SubViewport.
 func _build_viewport() -> Control:
 	var frame: VBoxContainer = VBoxContainer.new()
 	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
-	var container: SubViewportContainer = SubViewportContainer.new()
-	container.stretch = true
-	container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	container.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	container.mouse_filter = Control.MOUSE_FILTER_PASS
-	frame.add_child(container)
-
-	_world = SubViewport.new()
-	_world.handle_input_locally = false
-	_world.transparent_bg = true
-	container.add_child(_world)
-
-	_camera = Camera2D.new()
-	_camera.name = "EditorCamera"
-	_world.add_child(_camera)
-
 	_canvas = EditorCanvas.new()
 	_canvas.name = "Canvas"
+	_canvas.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_canvas.set_level(level)
 	_canvas.level_edited.connect(_on_level_edited)
 	_canvas.selection_changed.connect(_refresh_panel)
 	_canvas.status.connect(_say)
-	_world.add_child(_canvas)
+	_canvas.resized.connect(_apply_view)
+	frame.add_child(_canvas)
 
 	_status = Paper.label("", 18, Paper.FADED)
 	_status.custom_minimum_size = Vector2(0, 30)
@@ -580,22 +570,30 @@ func _say(message: String) -> void:
 
 func _frame_level() -> void:
 	var box: Rect2 = LevelGeometry.bounds(level).grow(FRAME_MARGIN)
-	_camera.position = box.get_center()
-	var view: Vector2 = _world.size if _world.size.x > 0.0 else Vector2(1280.0, 720.0)
+	_look_at = box.get_center()
+	var view: Vector2 = _canvas.size if _canvas != null and _canvas.size.x > 1.0 \
+		else Vector2(1280.0, 720.0)
 	var fit: float = minf(view.x / maxf(box.size.x, 1.0), view.y / maxf(box.size.y, 1.0))
-	_camera.zoom = Vector2.ONE * clampf(fit, EditorCanvas.ZOOM_MIN, EditorCanvas.ZOOM_MAX)
+	_zoom = clampf(fit, EditorCanvas.ZOOM_MIN, EditorCanvas.ZOOM_MAX)
+	_apply_view()
 
 
+func _apply_view() -> void:
+	if _canvas != null:
+		_canvas.set_view(_look_at, _zoom)
+
+
+## A point in this Control's space to a point in the level.
 func _world_position(screen_position: Vector2) -> Vector2:
-	var view: Vector2 = _world.size
-	return _camera.position + (screen_position - view * 0.5) / _camera.zoom
+	return _canvas.to_world(screen_position - _canvas.global_position + global_position)
 
 
 func _gui_input(event: InputEvent) -> void:
 	var motion: InputEventMouseMotion = event as InputEventMouseMotion
 	if motion != null:
 		if _panning:
-			_camera.position -= motion.relative / _camera.zoom
+			_look_at -= motion.relative / _zoom
+			_apply_view()
 		_canvas.cursor_moved(_world_position(motion.position))
 		return
 
@@ -607,10 +605,10 @@ func _gui_input(event: InputEvent) -> void:
 		_panning = button.pressed
 		return
 	if button.button_index == MOUSE_BUTTON_WHEEL_UP and button.pressed:
-		_zoom(ZOOM_STEP)
+		_zoom_by(ZOOM_STEP)
 		return
 	if button.button_index == MOUSE_BUTTON_WHEEL_DOWN and button.pressed:
-		_zoom(1.0 / ZOOM_STEP)
+		_zoom_by(1.0 / ZOOM_STEP)
 		return
 	if button.button_index == MOUSE_BUTTON_LEFT:
 		if button.pressed:
@@ -622,9 +620,9 @@ func _gui_input(event: InputEvent) -> void:
 		_canvas.secondary_pressed(_world_position(button.position))
 
 
-func _zoom(factor: float) -> void:
-	_camera.zoom = (_camera.zoom * factor).clampf(
-		EditorCanvas.ZOOM_MIN, EditorCanvas.ZOOM_MAX)
+func _zoom_by(factor: float) -> void:
+	_zoom = clampf(_zoom * factor, EditorCanvas.ZOOM_MIN, EditorCanvas.ZOOM_MAX)
+	_apply_view()
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

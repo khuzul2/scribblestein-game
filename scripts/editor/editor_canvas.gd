@@ -1,5 +1,5 @@
 class_name EditorCanvas
-extends Node2D
+extends Control
 
 ## The drawing surface of the level editor: it renders the level being edited and
 ## turns mouse input into edits.
@@ -9,6 +9,12 @@ extends Node2D
 ## impossible to show the things an editor must show and a player must not — the
 ## spawn point, a polygon mid-draw, the vertex you are about to grab. So this is
 ## a plain `_draw()` in world space, and Playtest is what builds the real thing.
+##
+## It is a `Control` that applies its own pan/zoom transform, rather than a
+## `Node2D` under a camera in a `SubViewport`. A SubViewport composites through a
+## texture, and when its size lands on a fractional control rect that composite
+## is filtered — which puts greys on every line in the editor. There is no grey
+## in this palette (Mandate A1), so the indirection had to go.
 
 signal level_edited(label: String)
 signal selection_changed
@@ -60,10 +66,26 @@ var _dragging: bool = false
 var _drag_from: Vector2 = Vector2.ZERO
 
 var _cursor: Vector2 = Vector2.ZERO
+## Pan and zoom, applied to everything drawn. The editor owns the values; this
+## owns the drawing.
+var view: Transform2D = Transform2D.IDENTITY
 
 
 func _ready() -> void:
-	set_process_unhandled_input(true)
+	clip_contents = true
+	mouse_filter = Control.MOUSE_FILTER_IGNORE  # the editor routes input here
+
+
+## Screen (control-local) point to world point.
+func to_world(local_point: Vector2) -> Vector2:
+	return view.affine_inverse() * local_point
+
+
+## Look at `centre` at `zoom`. World point p is drawn at `p * zoom + origin`,
+## with the origin chosen so `centre` lands in the middle of the control.
+func set_view(centre: Vector2, zoom: float) -> void:
+	view = Transform2D(0.0, Vector2.ONE * zoom, 0.0, size * 0.5 - centre * zoom)
+	queue_redraw()
 
 
 func set_level(new_level: LevelData) -> void:
@@ -344,6 +366,7 @@ func _snapped(world_position: Vector2) -> Vector2:
 # --- drawing -------------------------------------------------------------------
 
 func _draw() -> void:
+	draw_set_transform_matrix(view)
 	if show_grid:
 		_draw_grid()
 	for index: int in range(level.terrain.size()):
@@ -370,12 +393,11 @@ func _draw() -> void:
 ## of ticks reads as graph paper, which is what it is.
 func _draw_grid() -> void:
 	var step: float = GRID_STEP * 4.0
-	var scale: float = maxf(get_global_transform().get_scale().x, 0.001)
+	var scale: float = maxf(view.get_scale().x, 0.001)
 	if scale < 0.25:
 		return  # zoomed out far enough that the ticks would merge into a smear
-	var origin: Vector2 = (get_global_transform().affine_inverse() * Vector2.ZERO
-		/ step).floor() * step
-	var span: Vector2 = get_viewport_rect().size / scale
+	var origin: Vector2 = (to_world(Vector2.ZERO) / step).floor() * step
+	var span: Vector2 = size / scale
 	var tick: float = 4.0
 	for column: int in range(int(span.x / step) + 2):
 		for row: int in range(int(span.y / step) + 2):
