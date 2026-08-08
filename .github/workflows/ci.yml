@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  # Pin the exact minor, per TECH_SPEC §1 — never float on "4.x".
+  GODOT_VERSION: 4.4.1
+
+jobs:
+  build:
+    name: Import · validate · test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache the Godot binary
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/godot-bin
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: Download Godot ${{ env.GODOT_VERSION }}
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot-bin
+          curl -fsSL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot-bin
+          mv ~/godot-bin/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot-bin/godot
+          chmod +x ~/godot-bin/godot
+
+      - name: Put Godot on PATH
+        run: |
+          echo "$HOME/godot-bin" >> "$GITHUB_PATH"
+          "$HOME/godot-bin/godot" --headless --version
+
+      # Two passes: the first registers global classes, the second imports
+      # everything that depends on them.
+      - name: Import assets
+        run: |
+          godot --headless --import >/tmp/import.log 2>&1 || true
+          godot --headless --import >/tmp/import.log 2>&1
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" /tmp/import.log; then
+            echo "::error::Import produced script errors"
+            exit 1
+          fi
+
+      - name: Asset validator (palette, canvas, naming, import settings)
+        run: godot --headless -s tools/validate_assets.gd
+
+      - name: Placeholder art is up to date
+        run: |
+          godot --headless -s tools/generate_placeholders.gd
+          if ! git diff --quiet -- assets/; then
+            echo "::error::Generated placeholders differ from the committed ones"
+            git diff --stat -- assets/
+            exit 1
+          fi
+
+      - name: Unit tests
+        run: godot --headless -s tools/run_tests.gd
+
+      - name: Milestone acceptance criteria
+        run: ./tools/acceptance.sh
+
+      - name: Boot smoke test
+        run: |
+          godot --headless --quit >/tmp/boot.log 2>&1
+          grep -q "Scribblestein booted" /tmp/boot.log
+          if grep -E "SCRIPT ERROR|BOOT FAILURE" /tmp/boot.log; then
+            echo "::error::Boot produced errors"
+            exit 1
+          fi

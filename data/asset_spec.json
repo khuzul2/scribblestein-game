@@ -1,0 +1,64 @@
+{
+  "_comment": [
+    "Machine-readable form of docs/ASSET_SPEC.md, read by tools/validate_assets.gd",
+    "and tools/generate_placeholders.gd. Editing ASSET_SPEC.md means editing this too.",
+    "Colours are lowercase 8-digit RRGGBBAA hex and are compared exactly."
+  ],
+  "palette": {
+    "ink": "#000000ff",
+    "transparent": "#00000000",
+    "paper": "#f4f0e6ff"
+  },
+  "default_allowlist": ["#000000ff", "#00000000"],
+  "path_allowlists": [
+    {
+      "prefix": "res://assets/ui/",
+      "colors": ["#000000ff", "#00000000", "#f4f0e6ff"],
+      "why": "ASSET_SPEC 2 - UI may use paper white for white-on-black panels."
+    },
+    {
+      "prefix": "res://assets/tiles/paper_bg",
+      "colors": ["#000000ff", "#00000000", "#f4f0e6ff"],
+      "why": "ASSET_SPEC 2 - the dedicated paper background carries the paper white."
+    },
+    {
+      "prefix": "res://assets/fx/fx_correction_fluid",
+      "colors": ["#000000ff", "#00000000", "#f4f0e6ff"],
+      "why": "ASSET_SPEC 2 - Correction Fluid is literally white-out."
+    }
+  ],
+  "canvas_sizes": {
+    "torso": [384, 512],
+    "head": [256, 256],
+    "legs": [384, 384],
+    "legs_front": [384, 384],
+    "legs_rear": [384, 384],
+    "arms": [256, 384],
+    "tail": [320, 256],
+    "back": [384, 384]
+  },
+  "part_folders": {
+    "torso": "res://assets/parts/torsos",
+    "head": "res://assets/parts/heads",
+    "legs": "res://assets/parts/legs",
+    "legs_front": "res://assets/parts/legs",
+    "legs_rear": "res://assets/parts/legs",
+    "arms": "res://assets/parts/arms",
+    "tail": "res://assets/parts/tails",
+    "back": "res://assets/parts/backs"
+  },
+  "naming_patterns": [
+    { "prefix": "res://assets/parts/", "pattern": "^(torso|head|legs|arms|tail|back)_[a-z0-9_]+\\.png$" },
+    { "prefix": "res://assets/tiles/", "pattern": "^tile_[a-z0-9_]+\\.png$|^paper_bg\\.png$" },
+    { "prefix": "res://assets/ui/", "pattern": "^ui_[a-z0-9_]+\\.png$" },
+    { "prefix": "res://assets/fx/", "pattern": "^fx_[a-z0-9_]+\\.png$" }
+  ],
+  "import_requirements": {
+    "params/mipmaps/generate": false,
+    "params/compress/mode": 0,
+    "params/detect_3d/compress_to": 0
+  },
+  "project_setting_requirements": {
+    "rendering/textures/canvas_textures/default_texture_filter": 0
+  }
+}

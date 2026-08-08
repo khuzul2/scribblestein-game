@@ -27,3 +27,22 @@ code, ever.
 ## Requirements
 Godot **4.4.x** (Compatibility renderer). Validate data + assets headlessly:
 `godot --headless -s tools/validate_assets.gd` (available after M0).
+
+## Building & checking locally
+
+Requires Godot **4.4.1** on `PATH` as `godot`.
+
+```bash
+godot --headless --import                       # import assets (run twice on a clean clone)
+godot --headless -s tools/validate_assets.gd    # palette / canvas / naming / import settings
+godot --headless -s tools/generate_placeholders.gd  # regenerate placeholder art (deterministic)
+godot --headless -s tools/run_tests.gd          # unit tests
+./tools/acceptance.sh                           # milestone acceptance criteria
+godot --headless --quit                         # boot smoke test
+```
+
+CI (`.github/workflows/ci.yml`) runs all of the above on every push.
+
+Unresolved contradictions between spec sources are recorded in
+[`DECISIONS_NEEDED.md`](DECISIONS_NEEDED.md); any that are waived to keep the
+build moving are listed in `data/validation_waivers.json` and printed on every boot.

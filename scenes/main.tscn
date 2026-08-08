@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://cscribblesteinmain"]
+
+[ext_resource type="Script" path="res://scripts/core/game.gd" id="1_game"]
+
+[node name="Main" type="Node"]
+script = ExtResource("1_game")
+
+[node name="SceneRoot" type="Node" parent="."]

@@ -1,0 +1,16 @@
+{
+  "_comment": [
+    "Boot-validation issues that a human has been asked to rule on and that must",
+    "NOT block the build in the meantime. A waiver downgrades one issue id from",
+    "error to warning; the warning is printed on EVERY boot, so nothing is hidden.",
+    "Every id here MUST have a matching entry in /DECISIONS_NEEDED.md.",
+    "Deleting an entry restores the hard failure."
+  ],
+  "waivers": [
+    {
+      "id": "part_effect_slot_kind:arms_noodle_hookers:speed_boost",
+      "reason": "DECISIONS_NEEDED.md D1 - speed_boost is a UI icon flag; the actual speed change comes from stats.speed_mod, which WeightClass applies from every slot. Awaiting a call on whether effects.speed_boost.slot_kinds should include 'utility'.",
+      "opened": "M0"
+    }
+  ]
+}
