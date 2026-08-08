@@ -9,33 +9,72 @@
     "transparent": "#00000000",
     "paper": "#f4f0e6ff"
   },
-  "default_allowlist": ["#000000ff", "#00000000"],
+  "default_allowlist": [
+    "#000000ff",
+    "#00000000"
+  ],
   "path_allowlists": [
     {
       "prefix": "res://assets/ui/",
-      "colors": ["#000000ff", "#00000000", "#f4f0e6ff"],
+      "colors": [
+        "#000000ff",
+        "#00000000",
+        "#f4f0e6ff"
+      ],
       "why": "ASSET_SPEC 2 - UI may use paper white for white-on-black panels."
     },
     {
       "prefix": "res://assets/tiles/paper_bg",
-      "colors": ["#000000ff", "#00000000", "#f4f0e6ff"],
+      "colors": [
+        "#000000ff",
+        "#00000000",
+        "#f4f0e6ff"
+      ],
       "why": "ASSET_SPEC 2 - the dedicated paper background carries the paper white."
     },
     {
       "prefix": "res://assets/fx/fx_correction_fluid",
-      "colors": ["#000000ff", "#00000000", "#f4f0e6ff"],
+      "colors": [
+        "#000000ff",
+        "#00000000",
+        "#f4f0e6ff"
+      ],
       "why": "ASSET_SPEC 2 - Correction Fluid is literally white-out."
     }
   ],
   "canvas_sizes": {
-    "torso": [384, 512],
-    "head": [256, 256],
-    "legs": [384, 384],
-    "legs_front": [384, 384],
-    "legs_rear": [384, 384],
-    "arms": [256, 384],
-    "tail": [320, 256],
-    "back": [384, 384]
+    "torso": [
+      384,
+      512
+    ],
+    "head": [
+      256,
+      256
+    ],
+    "legs": [
+      384,
+      384
+    ],
+    "legs_front": [
+      384,
+      384
+    ],
+    "legs_rear": [
+      384,
+      384
+    ],
+    "arms": [
+      256,
+      384
+    ],
+    "tail": [
+      320,
+      256
+    ],
+    "back": [
+      384,
+      384
+    ]
   },
   "part_folders": {
     "torso": "res://assets/parts/torsos",
@@ -48,10 +87,22 @@
     "back": "res://assets/parts/backs"
   },
   "naming_patterns": [
-    { "prefix": "res://assets/parts/", "pattern": "^(torso|head|legs|arms|tail|back)_[a-z0-9_]+\\.png$" },
-    { "prefix": "res://assets/tiles/", "pattern": "^tile_[a-z0-9_]+\\.png$|^paper_bg\\.png$" },
-    { "prefix": "res://assets/ui/", "pattern": "^ui_[a-z0-9_]+\\.png$" },
-    { "prefix": "res://assets/fx/", "pattern": "^fx_[a-z0-9_]+\\.png$" }
+    {
+      "prefix": "res://assets/parts/",
+      "pattern": "^(torso|head|legs|arms|tail|back)_[a-z0-9_]+\\.png$"
+    },
+    {
+      "prefix": "res://assets/tiles/",
+      "pattern": "^tile_[a-z0-9_]+\\.png$|^paper_bg\\.png$"
+    },
+    {
+      "prefix": "res://assets/ui/",
+      "pattern": "^ui_[a-z0-9_]+\\.png$"
+    },
+    {
+      "prefix": "res://assets/fx/",
+      "pattern": "^fx_[a-z0-9_]+\\.png$"
+    }
   ],
   "import_requirements": {
     "params/mipmaps/generate": false,
@@ -60,5 +111,44 @@
   },
   "project_setting_requirements": {
     "rendering/textures/canvas_textures/default_texture_filter": 0
+  },
+  "audio": {
+    "_comment": "ASSET_SPEC 6. Ids are file stems under assets/audio/{sfx,music}.",
+    "required": [
+      "sfx_ui_click_scratch",
+      "sfx_ui_error_scratch",
+      "sfx_ui_page_turn",
+      "sfx_ui_stamp",
+      "sfx_step_scribble_01",
+      "sfx_step_scribble_02",
+      "sfx_step_scribble_03",
+      "sfx_step_scribble_04",
+      "sfx_jump_mouthpop",
+      "sfx_land_thud_light",
+      "sfx_land_thud_med",
+      "sfx_land_thud_heavy",
+      "sfx_glide_flapflap",
+      "sfx_climb_scratch_loop",
+      "sfx_roll_swish",
+      "sfx_crack_floor_break",
+      "sfx_attack_windup_inhale",
+      "sfx_bite_chomp",
+      "sfx_sting_thwip",
+      "sfx_hit_beatbox_thud",
+      "sfx_hurt_grunt_01",
+      "sfx_hurt_grunt_02",
+      "sfx_hurt_grunt_03",
+      "sfx_death_paper_tear",
+      "sfx_ink_slurp",
+      "sfx_blob_recover_bigslurp",
+      "sfx_blueprint_found_gasp",
+      "sfx_correction_squeak",
+      "sfx_unlock_kaching_mouth",
+      "sfx_voice_grunt",
+      "sfx_voice_crawler",
+      "sfx_voice_stinger",
+      "mus_lab_loop",
+      "mus_level01_loop"
+    ]
   }
 }

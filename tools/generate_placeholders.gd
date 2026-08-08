@@ -93,18 +93,25 @@ func _silhouette(part: Dictionary, slot: String, canvas: Vector2, pivot: Vector2
 
 	match slot:
 		"torso":
-			shapes.append(_blob(centre, extents, 13, rng))
+			# Drawn a little larger than its hurtbox and reaching up towards the
+			# neck, so the head sits *in* the shoulders rather than above them.
+			shapes.append(_blob(centre + Vector2(0, -extents.y * 0.18),
+				extents * Vector2(1.15, 1.4), 13, rng))
 		"head":
 			# The canvas puts the neck joint at bottom-centre, so the skull is
-			# drawn above the pivot even though its hurtbox straddles the joint.
-			shapes.append(_blob(pivot + Vector2(0, -extents.y * 1.05), extents * 1.15, 11, rng))
+			# drawn above the pivot. It reaches back down past the joint so the
+			# head meets the torso instead of floating over it.
+			shapes.append(_blob(pivot + Vector2(0, -extents.y * 0.45), extents * 1.5, 11, rng))
 		"legs", "legs_front", "legs_rear", "arms":
-			var reach: float = _offset_of(hurt).y + extents.y
+			# Limbs start above their pivot so they tuck under the torso rather
+			# than hanging off it with a seam.
+			var overlap: float = extents.y * (0.3 if slot == "arms" else 0.45)
+			var reach: float = _offset_of(hurt).y + extents.y + overlap
 			var half_width: float = extents.x * (0.42 if slot == "arms" else 0.46)
 			var spread: float = extents.x * (0.0 if slot == "arms" else 0.5)
-			shapes.append(_limb(pivot + Vector2(-spread, 0), reach, half_width, rng))
+			shapes.append(_limb(pivot + Vector2(-spread, -overlap), reach, half_width, rng))
 			if slot != "arms":
-				shapes.append(_limb(pivot + Vector2(spread, 0), reach, half_width * 0.92, rng))
+				shapes.append(_limb(pivot + Vector2(spread, -overlap), reach, half_width * 0.92, rng))
 		"tail":
 			# Reach to the far edge of the sting, so the drawing ends where the
 			# damage box does. Authored root-at-left facing right (ASSET_SPEC §1).

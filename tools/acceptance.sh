@@ -131,9 +131,25 @@ m2() {
   done
 }
 
+# --------------------------------------------------------------------------- M3
+
+m3() {
+  echo "M3 — The Lab & Scratchpad"
+  local output suite
+  for suite in lab; do
+    output="$(timeout 900 "$GODOT" --headless -s tools/run_tests.gd -- "$suite" 2>&1)"
+    if [ $? -eq 0 ]; then
+      pass "lab: readouts, drag-drop refusal, unlock cost and the Scratchpad round trip"
+    else
+      fail "lab: readouts, drag-drop refusal, unlock cost and the Scratchpad round trip"
+      echo "$output" | tail -30
+    fi
+  done
+}
+
 # --------------------------------------------------------------------------- run
 # Add each milestone's function name here as it lands.
-MILESTONES=(m0 m2)
+MILESTONES=(m0 m2 m3)
 
 for milestone in "${MILESTONES[@]}"; do
   if wanted "${milestone^^}" || [ ${#SELECTED[@]} -eq 0 ]; then

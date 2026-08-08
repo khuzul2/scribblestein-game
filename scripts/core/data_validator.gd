@@ -38,6 +38,7 @@ static func validate(data: Dictionary, waivers: Dictionary = {}) -> Array[Dictio
 	_check_enemies(data, issues)
 	_check_game_config(data, issues)
 	_check_weight_classes_are_reachable(data, issues)
+	_check_levels(data, issues)
 
 	for issue: Dictionary in issues:
 		if waivers.has(issue["id"]):
@@ -342,6 +343,34 @@ static func _check_game_config(data: Dictionary, issues: Array[Dictionary]) -> v
 			_add(issues, SEVERITY_ERROR, "config_boil_fps",
 				"data/game_config.json /line_boil/boil_fps: %s is outside boil_fps_range %s"
 				% [fps, str(boil_range)])
+
+
+static func _check_levels(data: Dictionary, issues: Array[Dictionary]) -> void:
+	var levels: Dictionary = (data.get("levels", {}) as Dictionary).get("levels", {}) as Dictionary
+	var effects: Dictionary = _effects(data)
+	if levels.is_empty():
+		_add(issues, SEVERITY_ERROR, "levels:empty", "data/levels.json declares no levels")
+		return
+	for level_id: Variant in levels:
+		var level: Dictionary = levels[level_id] as Dictionary
+		var path: String = "data/levels.json /levels/%s" % level_id
+		for key: String in ["name", "scene", "order"]:
+			if not level.has(key):
+				_add(issues, SEVERITY_ERROR, "level_key:%s:%s" % [level_id, key],
+					"%s: missing required key '%s'" % [path, key])
+		# A level whose scene does not exist yet is a warning, not a wall: the map
+		# has to be authorable before every level is built.
+		if level.has("scene") and not ResourceLoader.exists(str(level["scene"])):
+			_add(issues, SEVERITY_WARNING, "level_scene:%s" % level_id,
+				"%s/scene: '%s' does not exist yet" % [path, level["scene"]])
+		for required: Variant in level.get("requires", []) as Array:
+			if not levels.has(required):
+				_add(issues, SEVERITY_ERROR, "level_requires:%s:%s" % [level_id, required],
+					"%s/requires: unknown level '%s'" % [path, required])
+		for key_effect: Variant in level.get("keys", []) as Array:
+			if not effects.has(key_effect):
+				_add(issues, SEVERITY_ERROR, "level_key_effect:%s:%s" % [level_id, key_effect],
+					"%s/keys: '%s' is not an effect in data/effects.json" % [path, key_effect])
 
 
 ## DESIGN §5 promises three playable weight classes. If the lightest legal

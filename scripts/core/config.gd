@@ -15,6 +15,7 @@ const FILES: Dictionary = {
 	"effects": "res://data/effects.json",
 	"enemies": "res://data/enemies.json",
 	"game_config": "res://data/game_config.json",
+	"levels": "res://data/levels.json",
 }
 
 ## Emitted once the data set is loaded and validated.
@@ -25,6 +26,7 @@ var blueprints: Dictionary = {}
 var effects: Dictionary = {}
 var enemies: Dictionary = {}
 var game: Dictionary = {}
+var levels: Dictionary = {}
 
 var is_loaded: bool = false
 var warnings: PackedStringArray = PackedStringArray()
@@ -76,6 +78,7 @@ func load_all() -> bool:
 	effects = (raw["effects"] as Dictionary)["effects"] as Dictionary
 	enemies = (raw["enemies"] as Dictionary)["enemies"] as Dictionary
 	game = raw["game_config"] as Dictionary
+	levels = (raw["levels"] as Dictionary)["levels"] as Dictionary
 
 	JsonLoader.deep_freeze(raw)
 	is_loaded = true
@@ -103,6 +106,22 @@ func effect(effect_id: String) -> Dictionary:
 func enemy(enemy_id: String) -> Dictionary:
 	assert(enemies.has(enemy_id), "Unknown enemy id '%s'" % enemy_id)
 	return enemies.get(enemy_id, {}) as Dictionary
+
+
+func level(level_id: String) -> Dictionary:
+	assert(levels.has(level_id), "Unknown level id '%s'" % level_id)
+	return levels.get(level_id, {}) as Dictionary
+
+
+## Level ids that appear on the sketchbook world map, in play order.
+func map_level_ids() -> PackedStringArray:
+	var ids: Array = []
+	for level_id: Variant in levels:
+		if bool((levels[level_id] as Dictionary).get("on_map", false)):
+			ids.append(str(level_id))
+	ids.sort_custom(func(a: String, b: String) -> bool:
+		return int(level(a).get("order", 0)) < int(level(b).get("order", 0)))
+	return PackedStringArray(ids)
 
 
 ## Ids of every part whose `starter` flag is set — the always-unlocked kit.

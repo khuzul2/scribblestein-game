@@ -15,6 +15,7 @@ static func data_set() -> Dictionary:
 		"effects": load_data("res://data/effects.json"),
 		"enemies": load_data("res://data/enemies.json"),
 		"game_config": load_data("res://data/game_config.json"),
+		"levels": load_data("res://data/levels.json"),
 	}
 
 

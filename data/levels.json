@@ -1,0 +1,27 @@
+{
+  "_comment": [
+    "The sketchbook world map (DESIGN 3, 11). Levels unlock linearly at first,",
+    "then branch, so a player blocked by a missing anatomical key always has an",
+    "alternative. 'keys' is what the level's warning sketch advertises."
+  ],
+  "levels": {
+    "scratchpad": {
+      "name": "The Scratchpad",
+      "scene": "res://scenes/lab/scratchpad.tscn",
+      "order": 0,
+      "on_map": false,
+      "requires": [],
+      "keys": [],
+      "blurb": "A corner of the page for trying things out."
+    },
+    "level_01_margins": {
+      "name": "The Margins",
+      "scene": "res://scenes/levels/level_01_margins.tscn",
+      "order": 1,
+      "on_map": true,
+      "requires": [],
+      "keys": ["can_glide", "can_climb"],
+      "blurb": "Where the doodles go when they run out of page."
+    }
+  }
+}

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cscribbscratchpad"]
+
+[ext_resource type="Script" path="res://scripts/lab/scratchpad.gd" id="1_scratchpad"]
+
+[node name="Scratchpad" type="Node2D"]
+script = ExtResource("1_scratchpad")
