@@ -89,6 +89,16 @@ func is_enabled() -> bool:
 
 ## Half-extents for a rectangle, or (radius, radius) for a circle — used by the
 ## debug overlay and the body-collider fit.
+## The creature this box belongs to, found by walking up past the bones.
+func creature() -> Creature:
+	var node: Node = get_parent()
+	while node != null:
+		if node is Creature:
+			return node as Creature
+		node = node.get_parent()
+	return null
+
+
 func half_extents() -> Vector2:
 	if source.get("shape", "") == "circle":
 		var radius: float = float(source["radius"])

@@ -39,6 +39,7 @@ static func validate(data: Dictionary, waivers: Dictionary = {}) -> Array[Dictio
 	_check_game_config(data, issues)
 	_check_weight_classes_are_reachable(data, issues)
 	_check_levels(data, issues)
+	_check_attack_reach(data, issues)
 
 	for issue: Dictionary in issues:
 		if waivers.has(issue["id"]):
@@ -424,6 +425,95 @@ static func _check_weight_classes_are_reachable(data: Dictionary, issues: Array[
 				"data/game_config.json /movement/weight_classes/%s: unreachable on blueprint '%s'. The lightest legal build is %s = %d, past this class' ceiling of %d."
 				% [candidate, blueprint_id, ", ".join(lightest_build), int(lightest_total),
 					int((classes[candidate] as Dictionary).get("max_total_weight", 0.0))])
+
+
+## Can each attack actually touch each enemy?
+##
+## Hitbox offsets are bone-local and the bone tree is fixed, so whether a given
+## attack's damage box can ever overlap a given enemy's hurtboxes is decided
+## entirely by the data — and getting it wrong makes an enemy quietly immune.
+## This compares vertical spans with both creatures standing on the same ground.
+static func _check_attack_reach(data: Dictionary, issues: Array[Dictionary]) -> void:
+	var parts: Dictionary = _parts(data)
+	var enemies: Dictionary = _enemies(data)
+	var blueprints: Dictionary = _blueprints(data)
+	if parts.is_empty() or enemies.is_empty() or not blueprints.has("biped"):
+		return
+
+	var bones: Dictionary = _bone_offsets((blueprints["biped"] as Dictionary)["bones"] as Dictionary)
+	var slots: Dictionary = (blueprints["biped"] as Dictionary)["slots"] as Dictionary
+
+	for part_id: Variant in parts:
+		var part: Dictionary = parts[part_id] as Dictionary
+		if not bool(part.get("starter", false)):
+			continue  # only the kit every player always has must always connect
+		var span: Array = _box_span(part, "damage", str(part["slot"]), slots, bones)
+		if span.is_empty():
+			continue
+
+		for enemy_id: Variant in enemies:
+			var enemy: Dictionary = enemies[enemy_id] as Dictionary
+			if str(enemy.get("blueprint", "")) != "biped":
+				continue
+			var reachable: bool = false
+			var enemy_spans: PackedStringArray = PackedStringArray()
+			for slot_id: Variant in enemy.get("assembly", {}) as Dictionary:
+				var worn: Variant = (enemy["assembly"] as Dictionary)[slot_id]
+				if worn == null or not parts.has(worn):
+					continue
+				var hurt: Array = _box_span(parts[worn] as Dictionary, "hurtbox",
+					str(slot_id), slots, bones)
+				if hurt.is_empty():
+					continue
+				enemy_spans.append("%s %d..%d" % [slot_id, int(hurt[0]), int(hurt[1])])
+				if float(hurt[0]) <= float(span[1]) and float(hurt[1]) >= float(span[0]):
+					reachable = true
+			if not reachable and not enemy_spans.is_empty():
+				_add(issues, SEVERITY_WARNING, "attack_reach:%s:%s" % [part_id, enemy_id],
+					"data/parts_db.json /parts/%s: its damage box spans y %d..%d, which misses every hurtbox of '%s' (%s). A starter attack that cannot touch an enemy makes that enemy immune — see DECISIONS_NEEDED.md D5."
+					% [part_id, int(span[0]), int(span[1]), enemy_id, ", ".join(enemy_spans)])
+
+
+## Bone id -> its y offset from the creature root, following the parent chain.
+static func _bone_offsets(bone_specs: Dictionary) -> Dictionary:
+	var offsets: Dictionary = {}
+	var guard: int = bone_specs.size() + 1
+	while offsets.size() < bone_specs.size() and guard > 0:
+		guard -= 1
+		for bone_id: Variant in bone_specs:
+			if offsets.has(bone_id):
+				continue
+			var spec: Dictionary = bone_specs[bone_id] as Dictionary
+			var parent: Variant = spec.get("parent", null)
+			var position: Array = spec.get("position", [0, 0]) as Array
+			if parent == null:
+				offsets[bone_id] = float(position[1])
+			elif offsets.has(parent):
+				offsets[bone_id] = float(offsets[parent]) + float(position[1])
+	return offsets
+
+
+## `[top_y, bottom_y]` of a part's first box of `wanted` type, or [] if it has none.
+static func _box_span(part: Dictionary, wanted: String, slot: String,
+		slots: Dictionary, bones: Dictionary) -> Array:
+	if not slots.has(slot):
+		return []
+	var slot_spec: Dictionary = slots[slot] as Dictionary
+	var bone_ids: PackedStringArray = _slot_bones(slot_spec)
+	if bone_ids.is_empty() or not bones.has(bone_ids[0]):
+		return []
+	var bone_y: float = float(bones[bone_ids[0]])
+
+	for entry: Variant in part.get("hitboxes", []) as Array:
+		var box: Dictionary = entry as Dictionary
+		if str(box.get("type", "")) != wanted:
+			continue
+		var offset: Array = box.get("offset", [0, 0]) as Array
+		var half: float = float(box["radius"]) if str(box.get("shape", "")) == "circle" \
+			else float((box["extents"] as Array)[1])
+		var centre: float = bone_y + float(offset[1])
+		return [centre - half, centre + half]
+	return []
 
 
 # --- helpers -------------------------------------------------------------------

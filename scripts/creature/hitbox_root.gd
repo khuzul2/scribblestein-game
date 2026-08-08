@@ -11,6 +11,9 @@ extends Node2D
 ## flip a damage box on or off, which is how Mandate B5 stays enforceable.
 
 signal hitboxes_rebuilt
+## A live damage box touched an opposing hurtbox. The AttackController decides
+## whether that becomes damage; this node only reports the contact.
+signal damage_contact(box: Hitbox, target: Hitbox)
 
 ## Set true to draw every hitbox. Development aid only — never on in gameplay,
 ## so the M6 "screenshot contains only palette colours" criterion is unaffected.
@@ -29,6 +32,8 @@ func _process(_delta: float) -> void:
 
 func register(box: Hitbox) -> void:
 	_boxes.append(box)
+	if box.hitbox_type == Hitbox.TYPE_DAMAGE:
+		box.area_entered.connect(_on_damage_box_touched.bind(box))
 
 
 func clear() -> void:
@@ -79,6 +84,13 @@ func all_damage_boxes_dormant() -> bool:
 		if box.is_enabled():
 			return false
 	return true
+
+
+func _on_damage_box_touched(other: Area2D, box: Hitbox) -> void:
+	var target: Hitbox = other as Hitbox
+	if target == null or target.hitbox_type != Hitbox.TYPE_HURTBOX:
+		return
+	damage_contact.emit(box, target)
 
 
 func _draw() -> void:

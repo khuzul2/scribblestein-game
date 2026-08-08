@@ -147,9 +147,25 @@ m3() {
   done
 }
 
+# --------------------------------------------------------------------------- M4
+
+m4() {
+  echo "M4 — Combat"
+  local output suite
+  for suite in combat ai; do
+    output="$(timeout 900 "$GODOT" --headless -s tools/run_tests.gd -- "$suite" 2>&1)"
+    if [ $? -eq 0 ]; then
+      pass "$suite: damage formula, attack window, i-frames and the enemy FSM"
+    else
+      fail "$suite: damage formula, attack window, i-frames and the enemy FSM"
+      echo "$output" | tail -30
+    fi
+  done
+}
+
 # --------------------------------------------------------------------------- run
 # Add each milestone's function name here as it lands.
-MILESTONES=(m0 m2 m3)
+MILESTONES=(m0 m2 m3 m4)
 
 for milestone in "${MILESTONES[@]}"; do
   if wanted "${milestone^^}" || [ ${#SELECTED[@]} -eq 0 ]; then

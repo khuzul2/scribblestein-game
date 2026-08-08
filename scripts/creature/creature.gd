@@ -59,7 +59,8 @@ func _ready() -> void:
 	attack_controller.setup(hitbox_root)
 	climb_sensor.collision_layer = 0
 	climb_sensor.collision_mask = Layers.bit(Layers.CLIMBABLE)
-	health.died.connect(func() -> void: attack_controller.cancel())
+	health.died.connect(_on_died)
+	_wire_audio()
 
 
 ## Build this creature from a loadout. Returns the problems found, empty on
@@ -92,6 +93,39 @@ func apply_stats(new_stats: CreatureStats) -> void:
 
 func has_effect(effect_id: String) -> bool:
 	return stats.has_effect(effect_id)
+
+
+## Sounds follow the same signals the gameplay does, so anything that can happen
+## is audible without the systems knowing about the mixer (ASSET_SPEC §6).
+func _wire_audio() -> void:
+	health.damaged.connect(func(_amount: int, _from: Node) -> void:
+		Audio.sfx("sfx_hit_beatbox_thud", 0.12)
+		Audio.sfx("sfx_hurt_grunt_0%d" % (randi() % 3 + 1), 0.15))
+	health.healed.connect(func(_amount: int) -> void: Audio.sfx("sfx_correction_squeak"))
+	attack_controller.attack_phase_changed.connect(_on_attack_phase)
+	locomotion.jumped.connect(func(_kind: String) -> void: Audio.sfx("sfx_jump_mouthpop", 0.1))
+	locomotion.landed.connect(func(_speed: float) -> void:
+		Audio.sfx("sfx_land_thud_%s" % _land_sound_for(weight_class.class_id), 0.08))
+	locomotion.broke_cracked_floor.connect(
+		func(_node: Node) -> void: Audio.sfx("sfx_crack_floor_break"))
+
+
+func _on_attack_phase(action: String, phase: AttackController.Phase) -> void:
+	if phase == AttackController.Phase.WINDUP:
+		Audio.sfx("sfx_attack_windup_inhale", 0.1)
+	elif phase == AttackController.Phase.ACTIVE:
+		Audio.sfx("sfx_sting_thwip" if stats.has_effect("sting_attack")
+			and action == "attack_secondary" else "sfx_bite_chomp", 0.12)
+
+
+func _land_sound_for(class_id: String) -> String:
+	return "med" if class_id == "medium" else class_id
+
+
+func _on_died() -> void:
+	attack_controller.cancel()
+	hitbox_root.set_hurtboxes_enabled(false)
+	Audio.sfx("sfx_death_paper_tear")
 
 
 ## Squash the whole rig vertically while crouching. Scaling the skeleton takes
@@ -136,11 +170,13 @@ func _fit_body_collider() -> void:
 	var union: Rect2 = _union_of(hitbox_root.hurtboxes())
 	if union.size == Vector2.ZERO:
 		return
-	var shape: RectangleShape2D = body_collider.shape as RectangleShape2D
-	if shape == null:
-		shape = RectangleShape2D.new()
-		body_collider.shape = shape
+	# A fresh shape every time, never a mutated one: the shape declared in
+	# creature.tscn is a SubResource, which every instance of the scene *shares*.
+	# Resizing it in place would give every creature in the level the collider of
+	# whichever one assembled last.
+	var shape: RectangleShape2D = RectangleShape2D.new()
 	shape.size = union.size
+	body_collider.shape = shape
 	body_collider.position = union.get_center()
 	if not _crouched:
 		_standing_feet_y = union.end.y
@@ -153,11 +189,9 @@ func _fit_climb_sensor(union: Rect2) -> void:
 	if climb_sensor == null:
 		return
 	var shape_node: CollisionShape2D = climb_sensor.get_node("CollisionShape2D") as CollisionShape2D
-	var shape: RectangleShape2D = shape_node.shape as RectangleShape2D
-	if shape == null:
-		shape = RectangleShape2D.new()
-		shape_node.shape = shape
+	var shape: RectangleShape2D = RectangleShape2D.new()
 	shape.size = union.size + Vector2(CLIMB_SENSOR_MARGIN_PX * 2.0, 0.0)
+	shape_node.shape = shape
 	climb_sensor.position = union.get_center()
 
 

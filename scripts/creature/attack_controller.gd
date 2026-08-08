@@ -12,6 +12,7 @@ extends Node
 signal attack_started(action: String)
 signal attack_phase_changed(action: String, phase: Phase)
 signal attack_finished(action: String)
+signal hit_landed(target: Creature, damage: int)
 
 enum Phase { IDLE, WINDUP, ACTIVE, RECOVERY, COOLDOWN }
 
@@ -21,10 +22,13 @@ var current_action: String = ""
 
 var _hitbox_root: HitboxRoot = null
 var _phase_remaining: float = 0.0
+## Creatures already hit by the current activation, so one swing lands once.
+var _already_hit: Dictionary = {}
 
 
 func setup(hitbox_root: HitboxRoot) -> void:
 	_hitbox_root = hitbox_root
+	_hitbox_root.damage_contact.connect(_on_damage_contact)
 
 
 func _physics_process(delta: float) -> void:
@@ -94,8 +98,35 @@ func _enter(next: Phase) -> void:
 	phase = next
 	_phase_remaining = _duration_of(next)
 	if next == Phase.ACTIVE:
+		_already_hit.clear()
 		_hitbox_root.set_damage_enabled(slot_for(current_action), true)
+		# A target already inside the box when it arms must still be hit; the
+		# area_entered signal only fires for arrivals.
+		_sweep_overlaps()
 	attack_phase_changed.emit(current_action, next)
+
+
+## Resolve anyone already standing inside a box the moment it goes live.
+func _sweep_overlaps() -> void:
+	for box: Hitbox in _hitbox_root.damage_boxes_for_slot(slot_for(current_action)):
+		for other: Area2D in box.get_overlapping_areas():
+			var target: Hitbox = other as Hitbox
+			if target != null and target.hitbox_type == Hitbox.TYPE_HURTBOX:
+				_on_damage_contact(box, target)
+
+
+## Mandate B5 in one line: a contact only becomes damage during ACTIVE.
+func _on_damage_contact(box: Hitbox, target: Hitbox) -> void:
+	if phase != Phase.ACTIVE or box.slot != slot_for(current_action):
+		return
+	var defender: Creature = target.creature()
+	if defender == null or _already_hit.has(defender.get_instance_id()):
+		return
+	_already_hit[defender.get_instance_id()] = true
+
+	var damage: int = Combat.resolve(box.creature(), defender, current_action)
+	if damage > 0:
+		hit_landed.emit(defender, damage)
 
 
 func _leave_active() -> void:

@@ -121,3 +121,46 @@ legal build and the ceiling it misses, so the fix is a one-line data edit
 whenever a human picks an option.
 
 ---
+
+---
+
+## D5 — the starter bite cannot reach a grounded Stinger
+
+- **Waiver id:** none — reported as a boot warning
+  (`attack_reach:head_monster_maw:enemy_stinger`), which disappears by itself
+  once the data lets the two touch.
+- **Status:** OPEN — the slice is playable (see *Current behaviour*), but one
+  enemy is immune to the starter attack while it stands on the ground.
+
+**Conflict.** Hitbox offsets are bone-local and the biped bone tree is fixed, so
+whether an attack can ever touch a target is decided entirely by the data. The
+Jagged Monster Maw's damage circle sits at the `head` bone, `offset [60, -10]`,
+`radius 45` — a vertical span of **y −455 … −365**. `enemy_stinger` has no head
+(deliberately: *"its primary attack is simply absent"*), so its hurtboxes are
+torso −360 … −180, legs −150 … +6 and tail −197 … −153.
+
+The nearest pair, the bite's bottom edge and the torso's top edge, **miss by
+5 px**. The starter kit's only attack therefore cannot damage a grounded Stinger
+at all, and the Stinger is one of the three enemies the vertical slice ships.
+
+**Options.**
+1. Give `back_bat_scraps` a hurtbox. It is currently the only equipped part in
+   the game with `"hitboxes": []`, so the wings cannot be hit at all; a box at
+   the `back` bone (y −330) with a half-height of ~45 would span −375 … −285 and
+   close the gap. *Agent's recommendation* — it fixes a second latent gap at the
+   same time and reads correctly: you bite the wings.
+2. Lower or enlarge the maw's damage box (e.g. `offset [60, 10]`). One number,
+   but it changes the reach of the starter attack against everything.
+3. Accept it as designed: the Stinger is a tail-only target, teaching "kill what
+   you want to become" by forcing the player towards the Scorpion Tail. If this
+   is the intent it should be said out loud in DESIGN §9, because nothing
+   currently signals it and a player will read it as a bug.
+
+**Current behaviour.** Nothing is blocked and the slice is completable. The
+Stinger's `glide_harasser` profile has it hop off ledges and glide at the player,
+and while it is **airborne above** the player its legs and torso rise into the
+bite's band, so it can be hit out of the air. On the ground it cannot be bitten.
+The tail (`sting_attack`, damage box at torso height) hits it in either case.
+
+The reach check that found this now runs at boot for every starter attack
+against every enemy, so this class of silent immunity cannot reappear unnoticed.
