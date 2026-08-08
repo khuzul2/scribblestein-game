@@ -20,6 +20,8 @@ var jump_mod: float = 1.0
 
 ## Effect id -> the part id that granted it.
 var effects: Dictionary = {}
+## Effect id -> how many equipped parts carry it. Stacking passives read this.
+var effect_counts: Dictionary = {}
 ## Input action ("attack_primary"/"attack_secondary") -> {part_id, slot, attack_power, attack}.
 var attacks: Dictionary = {}
 ## Slot -> part id, for readouts and save round-trips.
@@ -39,6 +41,7 @@ func absorb(slot: String, part_id: String, part: Dictionary, wired_to: String) -
 
 	for effect_id: Variant in part.get("effects", []) as Array:
 		effects[str(effect_id)] = part_id
+		effect_counts[str(effect_id)] = int(effect_counts.get(str(effect_id), 0)) + 1
 
 	if wired_to != "" and part.has("attack"):
 		attacks[wired_to] = {
@@ -51,6 +54,20 @@ func absorb(slot: String, part_id: String, part: Dictionary, wired_to: String) -
 
 func has_effect(effect_id: String) -> bool:
 	return effects.has(effect_id)
+
+
+## How many equipped parts carry an effect. Passives that scale a number —
+## `thick_hide`, `ink_magnet`, `quick_strike`, `long_reach` — stack once per
+## part, so armouring four slots is meaningfully different from armouring one.
+func effect_count(effect_id: String) -> int:
+	return int(effect_counts.get(effect_id, 0))
+
+
+## A stacking multiplier: `per_part` applied once for each part carrying the
+## effect, or 1.0 when nothing does.
+func stacked(effect_id: String, per_part: float) -> float:
+	var layers: int = effect_count(effect_id)
+	return 1.0 if layers <= 0 else pow(per_part, float(layers))
 
 
 ## The attack wired to an input action, or an empty Dictionary when that button

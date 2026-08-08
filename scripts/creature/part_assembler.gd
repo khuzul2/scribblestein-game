@@ -60,6 +60,10 @@ static func assemble(creature: Creature, loadout: Dictionary) -> PackedStringArr
 		stats.absorb(slot, str(part_id), part, str(slot_spec.get("wired_to", "")))
 		_mount(creature, bones, slot, slot_spec, str(part_id), part)
 
+	# `long_reach` is applied after the whole loadout is known, because it is a
+	# property of the build rather than of any one part: whips on the arms make
+	# the *head's* bite land further out.
+	_apply_long_reach(creature, stats)
 	creature.hitbox_root.finish_rebuild()
 	creature.apply_stats(stats)
 	return PackedStringArray()
@@ -198,6 +202,20 @@ static func _mount(creature: Creature, bones: Dictionary, slot: String,
 				box.position.x = -box.position.x
 			bone.add_child(box)
 			creature.hitbox_root.register(box)
+
+
+## Grow every damage box by `combat.long_reach.size_mult`, once per part carrying
+## the effect. The box keeps its offset, so an attack lands further out without
+## changing where it points — and hurtboxes are untouched, so reaching further
+## never makes you a bigger target.
+static func _apply_long_reach(creature: Creature, stats: CreatureStats) -> void:
+	var scale: float = stats.stacked("long_reach",
+		Config.cfg_float("combat.long_reach.size_mult"))
+	if is_equal_approx(scale, 1.0):
+		return
+	for box: Hitbox in creature.hitbox_root.all():
+		if box.hitbox_type == Hitbox.TYPE_DAMAGE:
+			box.scale_shape(scale)
 
 
 static func _slot_bones(slot_spec: Dictionary) -> PackedStringArray:

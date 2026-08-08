@@ -6,9 +6,12 @@ the options, and the ruling.
 
 Precedence when resolving: MANDATES > `data/*.json` > TECH_SPEC > DESIGN > MILESTONES.
 
-**Status: all six entries were ruled on by a human before M8 and are resolved.
-`data/validation_waivers.json` is empty and boot validation raises zero issues.**
-`tests/test_decisions.gd` pins every ruling so none of them can quietly come back.
+**Status: all eight entries are resolved.** D1-D6 were ruled on by a human
+before M8; D7 and D8 were found by the tests when the M10 catalogue landed and
+fixed in that milestone. `data/validation_waivers.json` is empty and boot
+validation raises zero issues. `tests/test_decisions.gd`,
+`tests/test_catalogue.gd` and `tests/test_loadout_space.gd` pin every ruling so
+none of them can quietly come back.
 
 ---
 
@@ -129,9 +132,64 @@ The gate is still a gate: a creature that can neither roll nor crouch walks into
 the overhang and stops, which `tests/test_decisions.gd` proves.
 
 **Consequence, recorded rather than hidden.** With the v1 catalogue, *all three*
-`legs` parts grant `dodge_roll` or `crouch`, so now that rolling actually works a
-crawl tunnel gates nothing — every legal build passes it. That is a property of
-having only three legs parts, not of the ruling. The M10 catalogue adds legs with
-neither effect, at which point the tunnel is a real lock again. Level 01's crawl
-tunnel is on an optional branch, so nothing about the slice's progression depends
-on it either way.
+`legs` parts granted `dodge_roll` or `crouch`, so once rolling actually worked a
+crawl tunnel gated nothing. That was a property of having only three legs parts,
+not of the ruling. **Closed in M10:** Ink Stilts, Pogo Nib and Anvil Boots grant
+neither, so the tunnel is a real lock again — asserted by
+`tests/test_catalogue.gd`.
+
+---
+
+## D7 — a glide gate is only a gate below a certain ledge height
+
+- **Waiver id:** none — found by `tests/test_loadout_space.gd` when the M10
+  catalogue landed, and fixed in the same milestone. Recorded because it changes
+  how every future glide gate must be placed.
+- **Status:** RESOLVED in M10.
+
+**What went wrong.** Level 01's glide ledge sat 380 px below its launch lip, and
+the gate was proved by "the worst glide build out-reaches the best non-glide
+build". With 14 parts that held. With 61 it does not: the catalogue's best light
+double-jumper reaches **513 px** at that drop, while the *worst* glide build — a
+heavy creature wearing wings — manages only **465 px**. The gate silently became
+passable by exactly the builds it was meant to exclude.
+
+**Why.** Gliding is not "further than jumping"; it is *slower falling*. A glide
+converts a drop into time at a fixed fall speed, so its reach grows **linearly**
+with the drop, while a jump's grows with the **square root** of it. Below the
+crossing point a fast jumper wins; above it, every glider beats every
+non-glider. The crossing depends on the catalogue, so it moves whenever parts
+are added.
+
+**Ruling.** A glide gate must hang below the crossing. Level 01's ledge moved to
+a drop of 800 px with a 750 px gap, where the best non-glide build reaches 612 px
+and the worst glide build 892 px — daylight of 138 px and 142 px either side.
+`tests/test_loadout_space.gd` now asserts that a crossing exists at all, and that
+Level 01's own ledge hangs below it, so adding parts can never quietly reopen
+this.
+
+---
+
+## D8 — a creature's body collider did not turn around with it
+
+- **Waiver id:** none — a plain bug, found by the Level 01 autopilot in M10 and
+  fixed there. Recorded because it was invisible for four milestones and its
+  symptom looked like a level-design problem.
+- **Status:** RESOLVED in M10.
+
+**What went wrong.** The body collider is fitted to the union of the equipped
+hurtboxes, which for anything with a tail is not symmetric — a Stinger's box
+extends about 175 px further behind it than in front. The collider is a sibling
+of the `Skeleton2D`, so the `scale.x` flip that turns a creature around never
+reached it: the box stayed pointing whichever way the creature was first built.
+
+A Stinger that turned to face the player therefore carried a slab of collider
+sticking out of its **chest**, 120 px in front of any of its hurtboxes. It walled
+off the chasm corridor in Level 01 and held the player outside its own attack
+reach — an enemy that could neither be passed nor hit. The autopilot wedged
+against it and the level became uncompletable.
+
+**Fix.** `Creature` re-fits the collider whenever `facing` changes, reading the
+already-flipped hurtboxes, so the box always describes where the creature
+actually is. `tests/test_assembly.gd` asserts that a tailed creature's box
+mirrors on turning and still contains every hurtbox.

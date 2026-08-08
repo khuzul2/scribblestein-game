@@ -22,9 +22,11 @@ extends RefCounted
 ## every combination that could possibly be an extreme, and the answer is read
 ## off it directly.
 ##
-## `tests/test_loadout_space.gd` checks the whole thing against brute force on
-## the shipped catalogue, where enumeration is still cheap enough to be the
-## reference implementation.
+## `tests/test_loadout_space.gd` checks the whole thing against brute force. The
+## shipped catalogue is far too large to enumerate, so the comparison runs over a
+## restricted slice of it — the `allowed` filter every query here accepts — which
+## keeps the reference implementation runnable without weakening what it proves:
+## the search does not know it is being given fewer parts.
 
 ## Weights at or above this are all the heaviest class, so the search does not
 ## need to tell them apart. Computed from `game_config.json`, never assumed.
@@ -58,21 +60,21 @@ class State extends RefCounted:
 ## The furthest any legal loadout *lacking* `effect_id` can leap. A gate keyed to
 ## that effect has to beat this number.
 static func best_reach_without(effect_id: String, drop: float = 0.0,
-		blueprint_id: String = "biped") -> float:
-	return _extreme_reach(effect_id, drop, blueprint_id, false, true)
+		blueprint_id: String = "biped", allowed: Dictionary = {}) -> float:
+	return _extreme_reach(effect_id, drop, blueprint_id, false, true, allowed)
 
 
 ## The furthest any legal loadout *carrying* `effect_id` can leap.
 static func best_reach_with(effect_id: String, drop: float = 0.0,
-		blueprint_id: String = "biped") -> float:
-	return _extreme_reach(effect_id, drop, blueprint_id, true, true)
+		blueprint_id: String = "biped", allowed: Dictionary = {}) -> float:
+	return _extreme_reach(effect_id, drop, blueprint_id, true, true, allowed)
 
 
 ## The shortest leap of any loadout carrying `effect_id` — what the *worst* build
 ## holding the key manages, which is what a gate must still let through.
 static func worst_reach_with(effect_id: String, drop: float = 0.0,
-		blueprint_id: String = "biped") -> float:
-	return _extreme_reach(effect_id, drop, blueprint_id, true, false)
+		blueprint_id: String = "biped", allowed: Dictionary = {}) -> float:
+	return _extreme_reach(effect_id, drop, blueprint_id, true, false, allowed)
 
 
 ## Shortest and tallest a legal build stands, as `Vector2(shortest, tallest)`.
@@ -83,7 +85,8 @@ static func worst_reach_with(effect_id: String, drop: float = 0.0,
 ## parts anywhere in the catalogue, and the shortest is the best pairing among
 ## the required slots alone — an optional part can only ever make a creature
 ## bigger, never smaller.
-static func standing_height_range(blueprint_id: String = "biped") -> Vector2:
+static func standing_height_range(blueprint_id: String = "biped",
+		allowed: Dictionary = {}) -> Vector2:
 	var slots: Dictionary = Config.blueprint(blueprint_id)["slots"] as Dictionary
 	var bones: Dictionary = Config.blueprint(blueprint_id)["bones"] as Dictionary
 
@@ -101,18 +104,18 @@ static func standing_height_range(blueprint_id: String = "biped") -> Vector2:
 		# Per slot: the extreme span any single choice offers.
 		var slot_lowest_top: float = INF
 		var slot_highest_bottom: float = -INF
-		var slot_best_shortest_span: float = INF
 		for part_id: Variant in Config.parts:
 			var part: Dictionary = Config.parts[part_id] as Dictionary
 			if str(part["slot"]) != slot \
 					or not (part["fits_blueprints"] as Array).has(blueprint_id):
+				continue
+			if not allowed.is_empty() and not allowed.has(part_id):
 				continue
 			var span: Vector2 = _hurtbox_span(part, bone_y)
 			if span.x > span.y:
 				continue  # no hurtbox at all
 			slot_lowest_top = minf(slot_lowest_top, span.x)
 			slot_highest_bottom = maxf(slot_highest_bottom, span.y)
-			slot_best_shortest_span = minf(slot_best_shortest_span, span.y - span.x)
 
 		if slot_lowest_top == INF:
 			continue
@@ -121,8 +124,10 @@ static func standing_height_range(blueprint_id: String = "biped") -> Vector2:
 		if required:
 			# The shortest build still wears every required slot, so their union
 			# is the floor on how small a creature can be.
-			required_top = minf(required_top, _shortest_top(slot, blueprint_id, bone_y))
-			required_bottom = maxf(required_bottom, _shortest_bottom(slot, blueprint_id, bone_y))
+			required_top = minf(required_top,
+				_shortest_top(slot, blueprint_id, bone_y, allowed))
+			required_bottom = maxf(required_bottom,
+				_shortest_bottom(slot, blueprint_id, bone_y, allowed))
 
 	tallest = 0.0 if lowest_top >= highest_bottom else highest_bottom - lowest_top
 	var shortest: float = 0.0 if required_top >= required_bottom \
@@ -135,9 +140,9 @@ static func standing_height_range(blueprint_id: String = "biped") -> Vector2:
 ## `want_effect` filters to loadouts carrying `effect_id` (or lacking it);
 ## `want_max` picks the furthest rather than the shortest.
 static func _extreme_reach(effect_id: String, drop: float, blueprint_id: String,
-		want_effect: bool, want_max: bool) -> float:
+		want_effect: bool, want_max: bool, allowed: Dictionary = {}) -> float:
 	var flags: PackedStringArray = _flag_effects(effect_id)
-	var states: Array[State] = _reachable_states(blueprint_id, flags, want_max)
+	var states: Array[State] = _reachable_states(blueprint_id, flags, want_max, allowed)
 	var query_bit: int = _bit_of(flags, effect_id)
 
 	var best: float = -INF if want_max else INF
@@ -168,7 +173,7 @@ static func _bit_of(flags: PackedStringArray, effect_id: String) -> int:
 ## Everything a slot can contribute: one entry per legal part, plus an empty one
 ## when the slot is optional.
 static func _slot_options(blueprint_id: String, slot: String,
-		flags: PackedStringArray) -> Array[State]:
+		flags: PackedStringArray, allowed: Dictionary = {}) -> Array[State]:
 	var slots: Dictionary = Config.blueprint(blueprint_id)["slots"] as Dictionary
 	var options: Array[State] = []
 	if not bool((slots[slot] as Dictionary).get("required", false)):
@@ -178,6 +183,8 @@ static func _slot_options(blueprint_id: String, slot: String,
 		var part: Dictionary = Config.parts[part_id] as Dictionary
 		if str(part["slot"]) != slot \
 				or not (part["fits_blueprints"] as Array).has(blueprint_id):
+			continue
+		if not allowed.is_empty() and not allowed.has(part_id):
 			continue
 		var stats: Dictionary = part.get("stats", {}) as Dictionary
 		var mask: int = 0
@@ -189,60 +196,104 @@ static func _slot_options(blueprint_id: String, slot: String,
 	return options
 
 
+## Folds already computed this run. The fold depends on the catalogue and the
+## queried effects but *not* on the drop height, so asking about the same gate at
+## several drops — which is exactly what tuning a gap looks like — costs one
+## search instead of one per height.
+##
+## Safe to keep for the life of the process: `Config` deep-freezes the catalogue
+## at boot, so the inputs cannot change underneath it.
+static var _fold_cache: Dictionary = {}
+
+
 ## Fold the slots together, keeping only states that could still be an extreme.
 static func _reachable_states(blueprint_id: String, flags: PackedStringArray,
-		want_max: bool) -> Array[State]:
+		want_max: bool, allowed: Dictionary = {}) -> Array[State]:
+	var cache_key: String = "%s|%s|%s|%d" % [blueprint_id, ",".join(flags),
+		"max" if want_max else "min", hash(allowed)]
+	if _fold_cache.has(cache_key):
+		return _fold_cache[cache_key] as Array[State]
+
 	var ceiling: int = _weight_ceiling()
 	# bucket key -> Array[State], where the key packs (clamped weight, effect mask).
 	var buckets: Dictionary = {}
 	buckets[0] = [State.new(0, 0, 1.0, 1.0)] as Array[State]
 
 	for slot_id: Variant in (Config.blueprint(blueprint_id)["slots"] as Dictionary):
-		var options: Array[State] = _slot_options(blueprint_id, str(slot_id), flags)
-		var next: Dictionary = {}
+		var options: Array[State] = _slot_options(blueprint_id, str(slot_id), flags, allowed)
+		# Two passes per slot: gather every combination, deduplicating identical
+		# (speed, jump) pairs as we go, then prune each bucket to its frontier
+		# once. Pruning on every insert instead would make the slot quadratic in
+		# the frontier size, which at catalogue scale is the whole runtime.
+		var gathered: Dictionary = {}
 		for key: Variant in buckets:
 			for carried: State in buckets[key] as Array[State]:
 				for option: State in options:
 					var weight: int = mini(carried.weight + option.weight, ceiling)
-					var mask: int = carried.mask | option.mask
-					var merged: State = State.new(weight, mask,
-						carried.speed_mod * option.speed_mod,
-						carried.jump_mod * option.jump_mod)
-					_insert_pareto(next, weight * 256 + mask, merged, want_max)
+					var bucket_key: int = weight * MASK_SPAN + (carried.mask | option.mask)
+					var speed: float = carried.speed_mod * option.speed_mod
+					var jump: float = carried.jump_mod * option.jump_mod
+					if not gathered.has(bucket_key):
+						gathered[bucket_key] = {}
+					var seen: Dictionary = gathered[bucket_key] as Dictionary
+					var pair_key: int = _quantise(speed) * PAIR_SPAN + _quantise(jump)
+					if not seen.has(pair_key):
+						seen[pair_key] = State.new(weight,
+							carried.mask | option.mask, speed, jump)
+
+		var next: Dictionary = {}
+		for bucket_key: Variant in gathered:
+			var points: Array[State] = []
+			for state: Variant in (gathered[bucket_key] as Dictionary).values():
+				points.append(state as State)
+			next[bucket_key] = _frontier(points, want_max)
 		buckets = next
 
 	var flattened: Array[State] = []
 	for key: Variant in buckets:
 		flattened.append_array(buckets[key] as Array[State])
+	_fold_cache[cache_key] = flattened
 	return flattened
 
 
-## Add `candidate` to its bucket unless something already there beats it on both
-## axes, and drop anything it beats. This is the whole reason the search stays
-## small: within one (weight, effects) bucket only the frontier can ever win.
-static func _insert_pareto(buckets: Dictionary, key: int, candidate: State,
-		want_max: bool) -> void:
-	if not buckets.has(key):
-		buckets[key] = [candidate] as Array[State]
-		return
-
-	var frontier: Array[State] = buckets[key] as Array[State]
-	var survivors: Array[State] = []
-	for existing: State in frontier:
-		if _dominates(existing, candidate, want_max):
-			return  # already covered by a strictly better point
-		if not _dominates(candidate, existing, want_max):
-			survivors.append(existing)
-	survivors.append(candidate)
-	buckets[key] = survivors
+## How many distinct effect masks a bucket key must leave room for, and the
+## resolution the (speed, jump) dedupe works at. Five decimal places is far finer
+## than any authored `speed_mod`, so no two genuinely different builds collide.
+const MASK_SPAN: int = 256
+const PAIR_SPAN: int = 10_000_000
+const QUANTISE_SCALE: float = 100_000.0
 
 
-## True when `a` is at least as good as `b` on both axes. "Good" means larger
-## when hunting the furthest leap and smaller when hunting the shortest.
-static func _dominates(a: State, b: State, want_max: bool) -> bool:
+static func _quantise(value: float) -> int:
+	return int(round(value * QUANTISE_SCALE))
+
+
+## Reduce a bucket to the points that could still be an extreme: sort by speed,
+## then sweep, keeping only the running best jump. One sort beats a quadratic
+## all-pairs comparison, and this is the inner loop of the whole search.
+static func _frontier(points: Array[State], want_max: bool) -> Array[State]:
+	if points.size() <= 1:
+		return points
 	if want_max:
-		return a.speed_mod >= b.speed_mod and a.jump_mod >= b.jump_mod
-	return a.speed_mod <= b.speed_mod and a.jump_mod <= b.jump_mod
+		points.sort_custom(func(a: State, b: State) -> bool:
+			if a.speed_mod == b.speed_mod:
+				return a.jump_mod > b.jump_mod
+			return a.speed_mod > b.speed_mod)
+	else:
+		points.sort_custom(func(a: State, b: State) -> bool:
+			if a.speed_mod == b.speed_mod:
+				return a.jump_mod < b.jump_mod
+			return a.speed_mod < b.speed_mod)
+
+	var kept: Array[State] = []
+	var best_jump: float = -INF if want_max else INF
+	for state: State in points:
+		# Speed is already ordered best-first, so a point survives exactly when
+		# its jump beats everything better-or-equal on speed seen so far.
+		if (state.jump_mod > best_jump) if want_max else (state.jump_mod < best_jump):
+			best_jump = state.jump_mod
+			kept.append(state)
+	return kept
 
 
 ## Reach of one state, through exactly the same maths a real creature moves by.
@@ -298,12 +349,15 @@ static func _hurtbox_span(part: Dictionary, bone_y: float) -> Vector2:
 
 ## The highest `top` any single choice for this slot offers — i.e. the least this
 ## slot can push the creature's silhouette upwards.
-static func _shortest_top(slot: String, blueprint_id: String, bone_y: float) -> float:
+static func _shortest_top(slot: String, blueprint_id: String, bone_y: float,
+		allowed: Dictionary = {}) -> float:
 	var best: float = -INF
 	for part_id: Variant in Config.parts:
 		var part: Dictionary = Config.parts[part_id] as Dictionary
 		if str(part["slot"]) != slot \
 				or not (part["fits_blueprints"] as Array).has(blueprint_id):
+			continue
+		if not allowed.is_empty() and not allowed.has(part_id):
 			continue
 		var span: Vector2 = _hurtbox_span(part, bone_y)
 		if span.x <= span.y:
@@ -312,12 +366,15 @@ static func _shortest_top(slot: String, blueprint_id: String, bone_y: float) -> 
 
 
 ## The lowest `bottom` any single choice for this slot offers.
-static func _shortest_bottom(slot: String, blueprint_id: String, bone_y: float) -> float:
+static func _shortest_bottom(slot: String, blueprint_id: String, bone_y: float,
+		allowed: Dictionary = {}) -> float:
 	var best: float = INF
 	for part_id: Variant in Config.parts:
 		var part: Dictionary = Config.parts[part_id] as Dictionary
 		if str(part["slot"]) != slot \
 				or not (part["fits_blueprints"] as Array).has(blueprint_id):
+			continue
+		if not allowed.is_empty() and not allowed.has(part_id):
 			continue
 		var span: Vector2 = _hurtbox_span(part, bone_y)
 		if span.x <= span.y:

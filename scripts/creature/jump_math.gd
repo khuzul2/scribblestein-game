@@ -169,14 +169,17 @@ static func _bone_y(bone_id: String, bones: Dictionary) -> float:
 	return total
 
 
-## Every loadout the catalogue can legally build for a blueprint.
+## Every loadout the catalogue can legally build for a blueprint, optionally
+## restricted to the part ids in `allowed`.
 ##
 ## This is the reference implementation: obviously correct, and the thing
 ## `LoadoutSpace` is tested against in `tests/test_loadout_space.gd`. It is not
-## on any hot path, because the count is the product of the per-slot choices and
-## grows past a quarter of a million as the catalogue fills out. Use it to check
-## a claim, not to make one.
-static func every_loadout(blueprint_id: String = "biped") -> Array[Dictionary]:
+## on any hot path — the count is the product of the per-slot choices, which for
+## the shipped catalogue is 286,720 for the biped and 327,680 for the quadruped,
+## so calling it unrestricted will exhaust memory rather than answer. Use it to
+## check a claim over a slice of the catalogue, never to make one.
+static func every_loadout(blueprint_id: String = "biped",
+		allowed: Dictionary = {}) -> Array[Dictionary]:
 	var slots: Dictionary = Config.blueprint(blueprint_id)["slots"] as Dictionary
 	var options: Dictionary = {}
 	for slot_id: Variant in slots:
@@ -186,7 +189,10 @@ static func every_loadout(blueprint_id: String = "biped") -> Array[Dictionary]:
 			choices.append(null)
 		for part_id: Variant in Config.parts:
 			var part: Dictionary = Config.parts[part_id] as Dictionary
-			if str(part["slot"]) == slot and (part["fits_blueprints"] as Array).has(blueprint_id):
+			if str(part["slot"]) != slot \
+					or not (part["fits_blueprints"] as Array).has(blueprint_id):
+				continue
+			if allowed.is_empty() or allowed.has(part_id):
 				choices.append(str(part_id))
 		options[slot] = choices
 

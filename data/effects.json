@@ -27,6 +27,9 @@
     "can_glide": {
       "category": "mobility",
       "slot_kinds": [
+        "core",
+        "movement",
+        "attack",
         "utility"
       ],
       "description": "While airborne, falling, and jump_glide HELD: vertical speed clamped to glide_fall_cap; air control multiplied by glide_air_control. Releasing resumes normal gravity.",
@@ -35,6 +38,9 @@
     "double_jump": {
       "category": "mobility",
       "slot_kinds": [
+        "core",
+        "movement",
+        "attack",
         "utility"
       ],
       "description": "One extra jump per airtime on jump_glide TAP while airborne; resets on landing or wall grab. If the creature also has can_glide, tap = double jump, hold = glide.",
@@ -43,6 +49,9 @@
     "can_climb": {
       "category": "mobility",
       "slot_kinds": [
+        "core",
+        "movement",
+        "attack",
         "utility"
       ],
       "description": "While overlapping a 'climbable' layer wall and holding climb_up: ascend at climb_speed; gravity off; drains nothing (v1). Jump from wall gives a small away-impulse.",
@@ -51,7 +60,10 @@
     "dodge_roll": {
       "category": "mobility",
       "slot_kinds": [
-        "movement"
+        "core",
+        "movement",
+        "attack",
+        "utility"
       ],
       "description": "crouch_roll on ground: fixed-distance roll with i-frames. Fits under crawl tunnels only while rolling.",
       "params_from": "game_config.movement.roll"
@@ -59,7 +71,10 @@
     "crouch": {
       "category": "mobility",
       "slot_kinds": [
-        "movement"
+        "core",
+        "movement",
+        "attack",
+        "utility"
       ],
       "description": "crouch_roll HELD on ground: half-height hurtbox, move at crouch_speed, fits crawl tunnels continuously.",
       "params_from": "game_config.movement.crouch"
@@ -67,8 +82,8 @@
     "jump_boost": {
       "category": "passive",
       "slot_kinds": [
-        "movement",
         "core",
+        "movement",
         "attack",
         "utility"
       ],
@@ -77,12 +92,97 @@
     "speed_boost": {
       "category": "passive",
       "slot_kinds": [
-        "movement",
         "core",
+        "movement",
         "attack",
         "utility"
       ],
       "description": "Multiplies weight-class max_speed by the part's stats.speed_mod. UI icon flag; math applied by WeightClass. Legal in any slot: it is a UI flag for a stat multiplier, not a slot mechanic (D1)."
+    },
+    "air_dash": {
+      "category": "mobility",
+      "slot_kinds": [
+        "core",
+        "movement",
+        "attack",
+        "utility"
+      ],
+      "description": "jump_glide TAP while airborne and already out of jumps, or crouch_roll in the air: one committed horizontal burst of air_dash.distance over air_dash.duration, with gravity suspended. One per airtime; resets on landing or on a wall cling.",
+      "params_from": "game_config.movement.air_dash"
+    },
+    "wall_cling": {
+      "category": "mobility",
+      "slot_kinds": [
+        "core",
+        "movement",
+        "attack",
+        "utility"
+      ],
+      "description": "While overlapping a 'climbable' wall and pressing into it: stick to the face and slide down at wall_cling.slide_speed instead of falling. Resets double_jump and air_dash. Without can_climb you cannot ascend, only hold.",
+      "params_from": "game_config.movement.wall_cling"
+    },
+    "thick_hide": {
+      "category": "passive",
+      "slot_kinds": [
+        "core",
+        "movement",
+        "attack",
+        "utility"
+      ],
+      "description": "Knockback taken is multiplied by thick_hide.knockback_mult on top of the weight class' own knockback_taken_mult. Stacks multiplicatively across parts, so a fully armoured build barely moves when hit.",
+      "params_from": "game_config.combat.thick_hide"
+    },
+    "heavy_landing": {
+      "category": "passive",
+      "slot_kinds": [
+        "core",
+        "movement",
+        "attack",
+        "utility"
+      ],
+      "description": "Breaks 'world_cracked' floors on landing regardless of weight class, at the same crack_break_min_land_speed the Heavy class uses. Lets a light build buy its way through a Heavy-only floor (DESIGN \u00a79 lock and key)."
+    },
+    "ink_magnet": {
+      "category": "passive",
+      "slot_kinds": [
+        "core",
+        "movement",
+        "attack",
+        "utility"
+      ],
+      "description": "Multiplies economy.ink_pickup_magnet_radius by ink_magnet.radius_mult, so ink drifts to the creature instead of being walked over. Stacks multiplicatively.",
+      "params_from": "game_config.economy.ink_magnet"
+    },
+    "quick_strike": {
+      "category": "passive",
+      "slot_kinds": [
+        "core",
+        "movement",
+        "attack",
+        "utility"
+      ],
+      "description": "Multiplies an attack's windup, recovery and cooldown by quick_strike.time_mult. The active window is untouched, so the attack comes out sooner without becoming easier to land.",
+      "params_from": "game_config.combat.quick_strike"
+    },
+    "long_reach": {
+      "category": "passive",
+      "slot_kinds": [
+        "core",
+        "movement",
+        "attack",
+        "utility"
+      ],
+      "description": "Scales every equipped damage box by long_reach.size_mult, about its own offset, so attacks land from further out without moving where they point.",
+      "params_from": "game_config.combat.long_reach"
+    },
+    "spit_attack": {
+      "category": "attack",
+      "slot_kinds": [
+        "attack"
+      ],
+      "description": "Ranged. Instead of arming a damage box, the active phase launches one projectile from the part's damage box, travelling at combat.spit.speed for combat.spit.lifetime seconds or until it hits world or a hurtbox. Carries the part's attack_power, knockback and hitstun.",
+      "params_from": "game_config.combat.spit",
+      "requires_attack_def": true
     }
   },
   "notes": [

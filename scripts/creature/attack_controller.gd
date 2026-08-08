@@ -13,6 +13,7 @@ signal attack_started(action: String)
 signal attack_phase_changed(action: String, phase: Phase)
 signal attack_finished(action: String)
 signal hit_landed(target: Creature, damage: int)
+signal projectile_fired(shot: Projectile)
 
 enum Phase { IDLE, WINDUP, ACTIVE, RECOVERY, COOLDOWN }
 
@@ -99,11 +100,39 @@ func _enter(next: Phase) -> void:
 	_phase_remaining = _duration_of(next)
 	if next == Phase.ACTIVE:
 		_already_hit.clear()
-		_hitbox_root.set_damage_enabled(slot_for(current_action), true)
-		# A target already inside the box when it arms must still be hit; the
-		# area_entered signal only fires for arrivals.
-		_sweep_overlaps()
+		if is_ranged(current_action):
+			# A ranged attack never arms its own box: the damage leaves the
+			# creature. Arming one too would give the part a free melee hit.
+			_fire_projectile()
+		else:
+			_hitbox_root.set_damage_enabled(slot_for(current_action), true)
+			# A target already inside the box when it arms must still be hit; the
+			# area_entered signal only fires for arrivals.
+			_sweep_overlaps()
 	attack_phase_changed.emit(current_action, next)
+
+
+## True when the part wired to `action` throws its damage rather than swinging it.
+func is_ranged(action: String) -> bool:
+	if stats == null or action == "":
+		return false
+	var part_id: String = str(stats.attack_for(action).get("part_id", ""))
+	if part_id == "":
+		return false
+	return (Config.part(part_id).get("effects", []) as Array).has("spit_attack")
+
+
+func _fire_projectile() -> void:
+	var creature: Creature = get_parent() as Creature
+	if creature == null:
+		return
+	var shot: Projectile = Projectile.fire(creature, current_action, float(creature.facing))
+	if shot == null:
+		return
+	shot.hit.connect(func(defender: Creature, damage: int) -> void:
+		hit_landed.emit(defender, damage))
+	projectile_fired.emit(shot)
+	Audio.sfx("sfx_sting_thwip", 0.15)
 
 
 ## Resolve anyone already standing inside a box the moment it goes live.
@@ -138,14 +167,25 @@ func _duration_of(which: Phase) -> float:
 	var timing: Dictionary = timings(current_action)
 	match which:
 		Phase.WINDUP:
-			return float(timing.get("windup", 0.0))
+			return float(timing.get("windup", 0.0)) * quick_strike_mult()
 		Phase.ACTIVE:
+			# Deliberately untouched by `quick_strike`: shortening the window a
+			# hit can land in would make a faster attack harder to use, which is
+			# the opposite of what the part promises.
 			return float(timing.get("active", 0.0))
 		Phase.RECOVERY:
-			return float(timing.get("recovery", 0.0))
+			return float(timing.get("recovery", 0.0)) * quick_strike_mult()
 		Phase.COOLDOWN:
-			return float(timing.get("cooldown", 0.0))
+			return float(timing.get("cooldown", 0.0)) * quick_strike_mult()
 	return 0.0
+
+
+## How much `quick_strike` shortens the phases around the active window, once
+## per part carrying it.
+func quick_strike_mult() -> float:
+	if stats == null:
+		return 1.0
+	return stats.stacked("quick_strike", Config.cfg_float("combat.quick_strike.time_mult"))
 
 
 func apply_stats(new_stats: CreatureStats) -> void:

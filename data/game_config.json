@@ -74,6 +74,16 @@
     "crouch": {
       "speed_mult": 0.45,
       "hurtbox_height_mult": 0.5
+    },
+    "air_dash": {
+      "distance": 260,
+      "duration": 0.18,
+      "iframes": 0.0,
+      "note": "One committed horizontal burst per airtime, gravity suspended for its duration. Resets on landing or on a wall cling."
+    },
+    "wall_cling": {
+      "slide_speed": 60,
+      "note": "Held against a climbable face: fall is clamped to slide_speed. Resets double_jump and air_dash, but cannot ascend without can_climb."
     }
   },
   "combat": {
@@ -83,7 +93,22 @@
     "hitstop_seconds": 0.05,
     "knockback_decay": 8.0,
     "hazard_damage": 15,
-    "hazard_respawn_at_last_ground": true
+    "hazard_respawn_at_last_ground": true,
+    "thick_hide": {
+      "knockback_mult": 0.6
+    },
+    "quick_strike": {
+      "time_mult": 0.7
+    },
+    "long_reach": {
+      "size_mult": 1.35
+    },
+    "spit": {
+      "speed": 900,
+      "lifetime": 1.2,
+      "gravity_mult": 0.0,
+      "radius": 16
+    }
   },
   "economy": {
     "corpse_run": {
@@ -101,7 +126,10 @@
       "heal": 25,
       "despawn_seconds": 10
     },
-    "ink_pickup_magnet_radius": 90
+    "ink_pickup_magnet_radius": 90,
+    "ink_magnet": {
+      "radius_mult": 2.5
+    }
   },
   "camera": {
     "ref_height": 420,

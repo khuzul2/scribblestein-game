@@ -76,9 +76,19 @@ func _seek_player(delta: float) -> void:
 	if _player == null:
 		return
 	var offset: Vector2 = _player.global_position + Vector2(0, -120.0) - global_position
-	if offset.length() > magnet_radius:
+	if offset.length() > magnet_radius * _magnet_reach_mult():
 		return
 	global_position += offset.normalized() * magnet_speed * delta
+
+
+## `ink_magnet` widens the pull, once per part carrying it. Read from the player
+## each frame rather than baked in at spawn, so a pickup already lying on the
+## ground responds to the build you walked in with.
+func _magnet_reach_mult() -> float:
+	if _player == null or _player.stats == null:
+		return 1.0
+	return _player.stats.stacked("ink_magnet",
+		Config.cfg_float("economy.ink_magnet.radius_mult"))
 
 
 func _find_player() -> Creature:

@@ -106,8 +106,11 @@ func test_light_jump_apex_matches_the_formula() -> void:
 func test_jump_height_scales_with_the_parts_jump_mod() -> void:
 	_spawn(CreatureFixture.loadout({"legs": "legs_spring_coils", "head": null}))
 	await _settle()
-	almost(_creature.weight_class.jump_velocity(), -790.0 * 1.3, 0.01,
-		"the coils' 1.3 jump_mod multiplies the class velocity")
+	var boost: float = float((Config.part("legs_spring_coils")["stats"]
+		as Dictionary)["jump_mod"])
+	almost(_creature.weight_class.jump_velocity(),
+		Config.cfg_float("movement.weight_classes.medium.jump_velocity") * boost, 0.01,
+		"the coils' jump_mod multiplies the class velocity")
 	var apex: float = await _measure_apex()
 	within_percent(apex, _expected_apex(_creature.weight_class.jump_velocity()), 0.05,
 		"boosted apex")

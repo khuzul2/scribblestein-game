@@ -48,6 +48,29 @@ static func resolve(attacker: Creature, defender: Creature, action: String) -> i
 	return dealt
 
 
+## The same resolution, but with the numbers passed in rather than looked up
+## from the attacker's current loadout. A projectile outlives the swing that
+## fired it — and can outlive a rebuild — so it carries its own damage, and this
+## is how it spends it without inventing a second damage model.
+static func resolve_direct(attacker: Creature, defender: Creature,
+		attack_power: float, knockback: float, hitstun: float) -> int:
+	if defender == null or defender.health.is_dead():
+		return 0
+	if attacker != null and attacker.is_player == defender.is_player:
+		return 0
+
+	var amount: int = damage_for(attack_power, defender.stats.total_defense)
+	var dealt: int = defender.health.take_damage(amount, attacker)
+	if dealt <= 0:
+		return 0
+
+	apply_hitstun(defender, hitstun)
+	if attacker != null and is_instance_valid(attacker):
+		apply_knockback(attacker, defender, knockback)
+		hitstop(attacker.get_tree())
+	return dealt
+
+
 ## Environment damage (spikes and the like). Hazards are exempt from the
 ## attack-window rule, so they hit on contact rather than through an attack.
 static func resolve_hazard(defender: Creature, amount: int, source_position: Vector2) -> int:
@@ -76,7 +99,16 @@ static func apply_knockback(attacker: Creature, defender: Creature, force: float
 	var direction: float = signf(defender.global_position.x - attacker.global_position.x)
 	if is_zero_approx(direction):
 		direction = float(attacker.facing)
-	_push(defender, direction, force * defender.weight_class.knockback_taken_mult())
+	_push(defender, direction, force * defender.weight_class.knockback_taken_mult()
+		* thick_hide_mult(defender))
+
+
+## `thick_hide` multiplies knockback taken, once per part carrying it — so
+## armouring every slot really does make a creature immovable, and the Lab's
+## weight readout is not the only thing that says so.
+static func thick_hide_mult(defender: Creature) -> float:
+	return defender.stats.stacked("thick_hide",
+		Config.cfg_float("combat.thick_hide.knockback_mult"))
 
 
 static func _push(defender: Creature, direction: float, force: float) -> void:

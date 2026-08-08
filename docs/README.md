@@ -9,6 +9,9 @@ Agent reading order:
 4. `MILESTONES.md` — build order M0→M7 (the slice) then M8→M13 (phase two), each with acceptance
    criteria.
 5. `ASSET_SPEC.md` — before touching any texture or sound.
+6. `PARTS_TREE.md` — the full part and artwork catalogue: every slot, every part,
+   every archetype, every art file, and the coverage properties
+   `tests/test_catalogue.gd` enforces.
 
 Gameplay data lives at the repo root in `../data/` (= `res://data/` once
 `project.godot` exists): `parts_db.json` (+ schema), `blueprints.json`,

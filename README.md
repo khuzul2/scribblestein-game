@@ -62,7 +62,9 @@ godot -- --scene=rig_preview --hitboxes   # inspect a rig and its hitboxes
 **Finished:** every system the vertical slice needs — assembly, locomotion, the
 camera, combat, the enemy FSM, the economy and corpse run, save/load, the Lab,
 the Scratchpad and Level 01 — with the acceptance criteria of M0–M7 checked by
-`tools/acceptance.sh`.
+`tools/acceptance.sh`. Since the slice: Godot 4.7.1, both body types playable,
+and the full **61-part catalogue** across 18 effects
+([`docs/PARTS_TREE.md`](docs/PARTS_TREE.md)).
 
 **Placeholder:** the art and the audio. `tools/generate_placeholders.gd` and
 `tools/generate_placeholder_audio.gd` produce every texture and sound the game

@@ -357,6 +357,26 @@ func _generate_fx() -> void:
 	_stroke_closed(fluid, fluid_shape, 4, rng)
 	_save(fluid, "res://assets/fx/fx_correction_fluid.png")
 
+	# The spit projectile. Sized from `combat.spit.radius` so the drawing and the
+	# thing that actually hits you are the same size.
+	rng.seed = hash("fx_spit")
+	# Read straight from the file: a `-s` tool script runs before autoloads
+	# exist, so `Config` is not an identifier here.
+	var spit_radius: int = 16
+	var config: JsonLoader.Result = JsonLoader.load_object("res://data/game_config.json")
+	if config.ok:
+		spit_radius = int(((config.value as Dictionary)["combat"]
+			as Dictionary)["spit"]["radius"])
+	var spit_size: int = maxi(16, spit_radius * 2 + 8)
+	var spit: Image = Image.create(spit_size, spit_size, false, Image.FORMAT_RGBA8)
+	spit.fill(CLEAR)
+	var centre: Vector2 = Vector2(float(spit_size) * 0.5, float(spit_size) * 0.5)
+	var spit_shape: PackedVector2Array = _blob(centre,
+		Vector2(float(spit_radius), float(spit_radius) * 0.8), 9, rng)
+	_stroke_closed(spit, spit_shape, 3, rng)
+	_hatch(spit, spit_shape, rng)
+	_save(spit, "res://assets/fx/fx_spit.png")
+
 	rng.seed = hash("fx_blueprint_sketch")
 	var sketch: Image = Image.create(64, 64, false, Image.FORMAT_RGBA8)
 	sketch.fill(CLEAR)

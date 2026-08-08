@@ -1,30 +1,30 @@
 {
   "parts": {
-    "torso_ribby": {
-      "name": "Ribby Torso",
+    "torso_wire_cage": {
+      "name": "Wire Cage",
       "slot": "torso",
       "fits_blueprints": [
         "biped",
         "quadruped"
       ],
-      "texture_path": "res://assets/parts/torsos/torso_ribby.png",
+      "texture_path": "res://assets/parts/torsos/torso_wire_cage.png",
       "pivot": {
         "x": 192,
         "y": 256
       },
-      "weight": 20,
-      "unlock_cost": 0,
-      "starter": true,
+      "weight": 12,
+      "unlock_cost": 90,
       "stats": {
-        "base_hp": 100,
-        "defense": 0
+        "base_hp": 55,
+        "defense": 0,
+        "speed_mod": 1.1
       },
       "hitboxes": [
         {
           "shape": "rectangle",
           "extents": [
-            55,
-            90
+            38,
+            78
           ],
           "offset": [
             0,
@@ -33,8 +33,10 @@
           "type": "hurtbox"
         }
       ],
-      "effects": [],
-      "flavor": "The classic. You can count the mistakes."
+      "effects": [
+        "speed_boost"
+      ],
+      "flavor": "Mostly gaps. The gaps are the point."
     },
     "torso_paper_husk": {
       "name": "Paper Husk",
@@ -73,6 +75,196 @@
         "jump_boost"
       ],
       "flavor": "Barely there. Folds flat for storage."
+    },
+    "torso_ribby": {
+      "name": "Ribby Torso",
+      "slot": "torso",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/torsos/torso_ribby.png",
+      "pivot": {
+        "x": 192,
+        "y": 256
+      },
+      "weight": 20,
+      "unlock_cost": 0,
+      "starter": true,
+      "stats": {
+        "base_hp": 100,
+        "defense": 0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            55,
+            90
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [],
+      "flavor": "The classic. You can count the mistakes."
+    },
+    "torso_burst_seams": {
+      "name": "Burst Seams",
+      "slot": "torso",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/torsos/torso_burst_seams.png",
+      "pivot": {
+        "x": 192,
+        "y": 256
+      },
+      "weight": 22,
+      "unlock_cost": 140,
+      "stats": {
+        "base_hp": 60,
+        "defense": 0,
+        "speed_mod": 1.05,
+        "jump_mod": 1.05
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            50,
+            86
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "speed_boost",
+        "jump_boost"
+      ],
+      "flavor": "Everything is coming out. Everything is faster."
+    },
+    "torso_inkwell": {
+      "name": "Inkwell Belly",
+      "slot": "torso",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/torsos/torso_inkwell.png",
+      "pivot": {
+        "x": 192,
+        "y": 256
+      },
+      "weight": 26,
+      "unlock_cost": 130,
+      "stats": {
+        "base_hp": 110,
+        "defense": 1
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            58,
+            92
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "ink_magnet"
+      ],
+      "flavor": "Sloshes when you run. Ink likes it."
+    },
+    "torso_stitched_sack": {
+      "name": "Stitched Sack",
+      "slot": "torso",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/torsos/torso_stitched_sack.png",
+      "pivot": {
+        "x": 192,
+        "y": 256
+      },
+      "weight": 30,
+      "unlock_cost": 150,
+      "stats": {
+        "base_hp": 130,
+        "defense": 2,
+        "speed_mod": 0.97
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            62,
+            94
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "thick_hide"
+      ],
+      "flavor": "Someone sewed it shut. Someone was right to."
+    },
+    "torso_slab_of_card": {
+      "name": "Slab of Card",
+      "slot": "torso",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/torsos/torso_slab_of_card.png",
+      "pivot": {
+        "x": 192,
+        "y": 256
+      },
+      "weight": 38,
+      "unlock_cost": 220,
+      "stats": {
+        "base_hp": 160,
+        "defense": 4,
+        "speed_mod": 0.92
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            68,
+            96
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "thick_hide",
+        "heavy_landing"
+      ],
+      "flavor": "Corrugated. Structurally, that is cheating."
     },
     "torso_barrel": {
       "name": "Barrel Chest",
@@ -149,43 +341,43 @@
       ],
       "flavor": "Mostly motion lines."
     },
-    "legs_tree_trunks": {
-      "name": "Tree Trunks",
+    "legs_stilts": {
+      "name": "Ink Stilts",
       "slot": "legs",
       "fits_blueprints": [
         "biped"
       ],
-      "texture_path": "res://assets/parts/legs/legs_tree_trunks.png",
+      "texture_path": "res://assets/parts/legs/legs_stilts.png",
       "pivot": {
         "x": 192,
         "y": 40
       },
-      "weight": 35,
-      "unlock_cost": 100,
+      "weight": 10,
+      "unlock_cost": 110,
       "stats": {
-        "hp_bonus": 20,
-        "defense": 2,
-        "speed_mod": 0.9,
-        "jump_mod": 0.9
+        "hp_bonus": 0,
+        "defense": 0,
+        "speed_mod": 1.05,
+        "jump_mod": 1.15
       },
       "hitboxes": [
         {
           "shape": "rectangle",
           "extents": [
-            55,
-            85
+            26,
+            92
           ],
           "offset": [
             0,
-            82
+            88
           ],
           "type": "hurtbox"
         }
       ],
       "effects": [
-        "crouch"
+        "jump_boost"
       ],
-      "flavor": "Bark included, at no extra charge."
+      "flavor": "No knees. No knees needed."
     },
     "legs_spring_coils": {
       "name": "Spring Coils",
@@ -226,147 +418,113 @@
       ],
       "flavor": "Boing, sketched phonetically."
     },
-    "legs_front_scuttlers": {
-      "name": "Scuttler Forelegs",
-      "slot": "legs_front",
+    "legs_pogo_nib": {
+      "name": "Pogo Nib",
+      "slot": "legs",
       "fits_blueprints": [
-        "quadruped"
+        "biped"
       ],
-      "texture_path": "res://assets/parts/legs/legs_front_scuttlers.png",
+      "texture_path": "res://assets/parts/legs/legs_pogo_nib.png",
       "pivot": {
         "x": 192,
         "y": 40
       },
-      "weight": 5,
-      "unlock_cost": 0,
+      "weight": 14,
+      "unlock_cost": 190,
+      "stats": {
+        "hp_bonus": 5,
+        "defense": 0,
+        "speed_mod": 0.95,
+        "jump_mod": 1.25
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            24,
+            86
+          ],
+          "offset": [
+            0,
+            84
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "jump_boost",
+        "double_jump"
+      ],
+      "flavor": "One leg. Twice the ideas."
+    },
+    "legs_dash_scratches": {
+      "name": "Dash Scratches",
+      "slot": "legs",
+      "fits_blueprints": [
+        "biped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_dash_scratches.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 18,
+      "unlock_cost": 200,
       "stats": {
         "hp_bonus": 0,
         "defense": 0,
-        "speed_mod": 1.2,
+        "speed_mod": 1.08,
         "jump_mod": 1.0
       },
       "hitboxes": [
         {
           "shape": "rectangle",
           "extents": [
-            30,
-            60
+            42,
+            80
           ],
           "offset": [
             0,
-            60
+            80
           ],
           "type": "hurtbox"
         }
       ],
       "effects": [
-        "speed_boost"
+        "air_dash",
+        "dodge_roll"
       ],
-      "flavor": "Too many joints, all of them wrong. Very quick about it."
+      "flavor": "Drawn in one stroke, arriving before you do."
     },
-    "legs_front_paw_hammers": {
-      "name": "Paw Hammers",
-      "slot": "legs_front",
+    "legs_hoofed_scrawl": {
+      "name": "Hoofed Scrawl",
+      "slot": "legs",
       "fits_blueprints": [
-        "quadruped"
+        "biped"
       ],
-      "texture_path": "res://assets/parts/legs/legs_front_paw_hammers.png",
+      "texture_path": "res://assets/parts/legs/legs_hoofed_scrawl.png",
       "pivot": {
         "x": 192,
         "y": 40
       },
-      "weight": 28,
+      "weight": 26,
       "unlock_cost": 120,
       "stats": {
         "hp_bonus": 15,
-        "defense": 3,
-        "speed_mod": 0.9,
-        "jump_mod": 0.95
-      },
-      "hitboxes": [
-        {
-          "shape": "rectangle",
-          "extents": [
-            42,
-            60
-          ],
-          "offset": [
-            0,
-            60
-          ],
-          "type": "hurtbox"
-        }
-      ],
-      "effects": [],
-      "flavor": "Drawn heavy, so they land heavy."
-    },
-    "legs_rear_haunches": {
-      "name": "Spring Haunches",
-      "slot": "legs_rear",
-      "fits_blueprints": [
-        "quadruped"
-      ],
-      "texture_path": "res://assets/parts/legs/legs_rear_haunches.png",
-      "pivot": {
-        "x": 192,
-        "y": 40
-      },
-      "weight": 5,
-      "unlock_cost": 0,
-      "stats": {
-        "hp_bonus": 0,
-        "defense": 0,
+        "defense": 1,
         "speed_mod": 1.0,
-        "jump_mod": 1.2
+        "jump_mod": 1.0
       },
       "hitboxes": [
         {
           "shape": "rectangle",
           "extents": [
-            30,
-            60
+            48,
+            82
           ],
           "offset": [
             0,
-            60
-          ],
-          "type": "hurtbox"
-        }
-      ],
-      "effects": [
-        "jump_boost"
-      ],
-      "flavor": "All the pounce lives back here."
-    },
-    "legs_rear_dragging_stumps": {
-      "name": "Dragging Stumps",
-      "slot": "legs_rear",
-      "fits_blueprints": [
-        "quadruped"
-      ],
-      "texture_path": "res://assets/parts/legs/legs_rear_dragging_stumps.png",
-      "pivot": {
-        "x": 192,
-        "y": 40
-      },
-      "weight": 30,
-      "unlock_cost": 120,
-      "stats": {
-        "hp_bonus": 25,
-        "defense": 3,
-        "speed_mod": 0.85,
-        "jump_mod": 0.85
-      },
-      "hitboxes": [
-        {
-          "shape": "rectangle",
-          "extents": [
-            44,
-            60
-          ],
-          "offset": [
-            0,
-            60
+            80
           ],
           "type": "hurtbox"
         }
@@ -374,7 +532,514 @@
       "effects": [
         "crouch"
       ],
-      "flavor": "They do not so much walk as get taken along."
+      "flavor": "Clop. Clop. Clop. Sorry."
+    },
+    "legs_tree_trunks": {
+      "name": "Tree Trunks",
+      "slot": "legs",
+      "fits_blueprints": [
+        "biped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_tree_trunks.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 35,
+      "unlock_cost": 100,
+      "stats": {
+        "hp_bonus": 20,
+        "defense": 2,
+        "speed_mod": 0.9,
+        "jump_mod": 0.9
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            55,
+            85
+          ],
+          "offset": [
+            0,
+            82
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "crouch"
+      ],
+      "flavor": "Bark included, at no extra charge."
+    },
+    "legs_anvil_boots": {
+      "name": "Anvil Boots",
+      "slot": "legs",
+      "fits_blueprints": [
+        "biped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_anvil_boots.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 42,
+      "unlock_cost": 240,
+      "stats": {
+        "hp_bonus": 30,
+        "defense": 3,
+        "speed_mod": 0.85,
+        "jump_mod": 0.8
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            58,
+            84
+          ],
+          "offset": [
+            0,
+            82
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "heavy_landing",
+        "thick_hide"
+      ],
+      "flavor": "The floor is a suggestion."
+    },
+    "arms_pocket_lint": {
+      "name": "Pocket Lint",
+      "slot": "arms",
+      "fits_blueprints": [
+        "biped"
+      ],
+      "texture_path": "res://assets/parts/arms/arms_pocket_lint.png",
+      "pivot": {
+        "x": 128,
+        "y": 40
+      },
+      "weight": 3,
+      "unlock_cost": 70,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            20,
+            52
+          ],
+          "offset": [
+            0,
+            30
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "ink_magnet"
+      ],
+      "flavor": "Somehow it keeps finding ink."
+    },
+    "arms_noodle_hookers": {
+      "name": "Noodle Hookers",
+      "slot": "arms",
+      "fits_blueprints": [
+        "biped"
+      ],
+      "texture_path": "res://assets/parts/arms/arms_noodle_hookers.png",
+      "pivot": {
+        "x": 128,
+        "y": 30
+      },
+      "weight": 5,
+      "unlock_cost": 60,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "speed_mod": 1.05
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            18,
+            80
+          ],
+          "offset": [
+            0,
+            65
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "speed_boost"
+      ],
+      "flavor": "Wacky. Waving. You know the rest."
+    },
+    "arms_scribble_whips": {
+      "name": "Scribble Whips",
+      "slot": "arms",
+      "fits_blueprints": [
+        "biped"
+      ],
+      "texture_path": "res://assets/parts/arms/arms_scribble_whips.png",
+      "pivot": {
+        "x": 128,
+        "y": 40
+      },
+      "weight": 8,
+      "unlock_cost": 160,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            24,
+            60
+          ],
+          "offset": [
+            0,
+            34
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "long_reach"
+      ],
+      "flavor": "They arrive slightly before the rest of you."
+    },
+    "arms_climber_claws": {
+      "name": "Climber Claws",
+      "slot": "arms",
+      "fits_blueprints": [
+        "biped"
+      ],
+      "texture_path": "res://assets/parts/arms/arms_climber_claws.png",
+      "pivot": {
+        "x": 128,
+        "y": 30
+      },
+      "weight": 10,
+      "unlock_cost": 100,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            24,
+            70
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "can_climb"
+      ],
+      "flavor": "Ten crooked lines that really want to be fingers."
+    },
+    "arms_grapple_hooks": {
+      "name": "Grapple Hooks",
+      "slot": "arms",
+      "fits_blueprints": [
+        "biped"
+      ],
+      "texture_path": "res://assets/parts/arms/arms_grapple_hooks.png",
+      "pivot": {
+        "x": 128,
+        "y": 40
+      },
+      "weight": 14,
+      "unlock_cost": 230,
+      "stats": {
+        "hp_bonus": 5,
+        "defense": 1
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            28,
+            62
+          ],
+          "offset": [
+            0,
+            34
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "can_climb",
+        "wall_cling"
+      ],
+      "flavor": "Hold on. Keep holding on."
+    },
+    "arms_shield_flaps": {
+      "name": "Shield Flaps",
+      "slot": "arms",
+      "fits_blueprints": [
+        "biped"
+      ],
+      "texture_path": "res://assets/parts/arms/arms_shield_flaps.png",
+      "pivot": {
+        "x": 128,
+        "y": 40
+      },
+      "weight": 20,
+      "unlock_cost": 200,
+      "stats": {
+        "hp_bonus": 10,
+        "defense": 3
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            34,
+            64
+          ],
+          "offset": [
+            0,
+            34
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "thick_hide"
+      ],
+      "flavor": "Two large flat noes."
+    },
+    "head_thumbtack": {
+      "name": "Thumbtack Skull",
+      "slot": "head",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/heads/head_thumbtack.png",
+      "pivot": {
+        "x": 128,
+        "y": 128
+      },
+      "weight": 5,
+      "unlock_cost": 280,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "attack_power": 50
+      },
+      "attack": {
+        "windup": 0.18,
+        "active": 0.1,
+        "recovery": 0.24,
+        "cooldown": 0.75,
+        "knockback": 240,
+        "hitstun": 0.22
+      },
+      "hitboxes": [
+        {
+          "shape": "circle",
+          "radius": 26,
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        },
+        {
+          "shape": "circle",
+          "radius": 30,
+          "offset": [
+            50,
+            0
+          ],
+          "type": "damage"
+        }
+      ],
+      "effects": [
+        "bite_attack"
+      ],
+      "flavor": "All point, no head."
+    },
+    "head_pencil_stub": {
+      "name": "Pencil Stub Head",
+      "slot": "head",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/heads/head_pencil_stub.png",
+      "pivot": {
+        "x": 128,
+        "y": 240
+      },
+      "weight": 6,
+      "unlock_cost": 80,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "attack_power": 20
+      },
+      "attack": {
+        "windup": 0.06,
+        "active": 0.08,
+        "recovery": 0.1,
+        "cooldown": 0.22,
+        "knockback": 180,
+        "hitstun": 0.1
+      },
+      "hitboxes": [
+        {
+          "shape": "circle",
+          "radius": 34,
+          "offset": [
+            52,
+            0
+          ],
+          "type": "damage"
+        },
+        {
+          "shape": "rectangle",
+          "extents": [
+            34,
+            40
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "bite_attack"
+      ],
+      "flavor": "Chewed. By whom? Unclear."
+    },
+    "head_needle_beak": {
+      "name": "Needle Beak",
+      "slot": "head",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/heads/head_needle_beak.png",
+      "pivot": {
+        "x": 128,
+        "y": 128
+      },
+      "weight": 9,
+      "unlock_cost": 150,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "attack_power": 28
+      },
+      "attack": {
+        "windup": 0.14,
+        "active": 0.1,
+        "recovery": 0.18,
+        "cooldown": 0.6,
+        "knockback": 150,
+        "hitstun": 0.16
+      },
+      "hitboxes": [
+        {
+          "shape": "circle",
+          "radius": 28,
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        },
+        {
+          "shape": "circle",
+          "radius": 30,
+          "offset": [
+            54,
+            -2
+          ],
+          "type": "damage"
+        }
+      ],
+      "effects": [
+        "bite_attack",
+        "quick_strike"
+      ],
+      "flavor": "Opens post. Opens everything."
+    },
+    "head_spit_gland": {
+      "name": "Spit Gland",
+      "slot": "head",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/heads/head_spit_gland.png",
+      "pivot": {
+        "x": 128,
+        "y": 128
+      },
+      "weight": 12,
+      "unlock_cost": 260,
+      "stats": {
+        "hp_bonus": 5,
+        "defense": 0,
+        "attack_power": 18
+      },
+      "attack": {
+        "windup": 0.2,
+        "active": 0.08,
+        "recovery": 0.22,
+        "cooldown": 0.85,
+        "knockback": 90,
+        "hitstun": 0.12
+      },
+      "hitboxes": [
+        {
+          "shape": "circle",
+          "radius": 34,
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        },
+        {
+          "shape": "circle",
+          "radius": 24,
+          "offset": [
+            52,
+            0
+          ],
+          "type": "damage"
+        }
+      ],
+      "effects": [
+        "spit_attack"
+      ],
+      "flavor": "Do not stand in front of it. Do not stand behind it."
     },
     "head_monster_maw": {
       "name": "Jagged Monster Maw",
@@ -432,60 +1097,164 @@
       ],
       "flavor": "Every tooth a different size, on purpose, probably."
     },
-    "head_pencil_stub": {
-      "name": "Pencil Stub Head",
+    "head_lantern_jaw": {
+      "name": "Lantern Jaw",
       "slot": "head",
       "fits_blueprints": [
         "biped",
         "quadruped"
       ],
-      "texture_path": "res://assets/parts/heads/head_pencil_stub.png",
+      "texture_path": "res://assets/parts/heads/head_lantern_jaw.png",
       "pivot": {
         "x": 128,
-        "y": 240
+        "y": 128
       },
-      "weight": 6,
-      "unlock_cost": 80,
+      "weight": 22,
+      "unlock_cost": 240,
       "stats": {
-        "hp_bonus": 0,
-        "defense": 0,
-        "attack_power": 20
+        "hp_bonus": 15,
+        "defense": 1,
+        "attack_power": 44
       },
       "attack": {
-        "windup": 0.06,
-        "active": 0.08,
-        "recovery": 0.1,
-        "cooldown": 0.22,
-        "knockback": 180,
-        "hitstun": 0.1
+        "windup": 0.22,
+        "active": 0.14,
+        "recovery": 0.26,
+        "cooldown": 0.85,
+        "knockback": 260,
+        "hitstun": 0.22
       },
       "hitboxes": [
         {
           "shape": "circle",
-          "radius": 34,
-          "offset": [
-            52,
-            0
-          ],
-          "type": "damage"
-        },
-        {
-          "shape": "rectangle",
-          "extents": [
-            34,
-            40
-          ],
+          "radius": 42,
           "offset": [
             0,
             0
           ],
           "type": "hurtbox"
+        },
+        {
+          "shape": "circle",
+          "radius": 48,
+          "offset": [
+            66,
+            -6
+          ],
+          "type": "damage"
         }
       ],
       "effects": [
-        "bite_attack"
+        "bite_attack",
+        "long_reach"
       ],
-      "flavor": "Chewed. By whom? Unclear."
+      "flavor": "Arrives at a room slightly before the rest of you."
+    },
+    "head_two_faces": {
+      "name": "Two Bad Faces",
+      "slot": "head",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/heads/head_two_faces.png",
+      "pivot": {
+        "x": 128,
+        "y": 128
+      },
+      "weight": 26,
+      "unlock_cost": 230,
+      "stats": {
+        "hp_bonus": 20,
+        "defense": 1,
+        "attack_power": 34
+      },
+      "attack": {
+        "windup": 0.14,
+        "active": 0.16,
+        "recovery": 0.18,
+        "cooldown": 0.55,
+        "knockback": 180,
+        "hitstun": 0.18
+      },
+      "hitboxes": [
+        {
+          "shape": "circle",
+          "radius": 46,
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        },
+        {
+          "shape": "circle",
+          "radius": 40,
+          "offset": [
+            58,
+            -8
+          ],
+          "type": "damage"
+        }
+      ],
+      "effects": [
+        "bite_attack",
+        "quick_strike"
+      ],
+      "flavor": "Neither of them is the good one."
+    },
+    "head_bucket": {
+      "name": "Rusted Bucket",
+      "slot": "head",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/heads/head_bucket.png",
+      "pivot": {
+        "x": 128,
+        "y": 128
+      },
+      "weight": 30,
+      "unlock_cost": 210,
+      "stats": {
+        "hp_bonus": 35,
+        "defense": 3,
+        "attack_power": 30
+      },
+      "attack": {
+        "windup": 0.24,
+        "active": 0.12,
+        "recovery": 0.3,
+        "cooldown": 0.95,
+        "knockback": 300,
+        "hitstun": 0.24
+      },
+      "hitboxes": [
+        {
+          "shape": "circle",
+          "radius": 46,
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        },
+        {
+          "shape": "circle",
+          "radius": 38,
+          "offset": [
+            52,
+            0
+          ],
+          "type": "damage"
+        }
+      ],
+      "effects": [
+        "bite_attack",
+        "thick_hide"
+      ],
+      "flavor": "Not a head. Doing the job of a head."
     },
     "head_anvil": {
       "name": "Anvil Noggin",
@@ -545,78 +1314,182 @@
       ],
       "flavor": "Headbutt as a lifestyle."
     },
-    "arms_climber_claws": {
-      "name": "Climber Claws",
-      "slot": "arms",
+    "tail_ink_dribble": {
+      "name": "Ink Dribble",
+      "slot": "tail",
       "fits_blueprints": [
-        "biped"
+        "biped",
+        "quadruped"
       ],
-      "texture_path": "res://assets/parts/arms/arms_climber_claws.png",
+      "texture_path": "res://assets/parts/tails/tail_ink_dribble.png",
       "pivot": {
-        "x": 128,
-        "y": 30
+        "x": 160,
+        "y": 128
       },
-      "weight": 10,
-      "unlock_cost": 100,
-      "stats": {
-        "hp_bonus": 0,
-        "defense": 0
-      },
-      "hitboxes": [
-        {
-          "shape": "rectangle",
-          "extents": [
-            24,
-            70
-          ],
-          "offset": [
-            0,
-            60
-          ],
-          "type": "hurtbox"
-        }
-      ],
-      "effects": [
-        "can_climb"
-      ],
-      "flavor": "Ten crooked lines that really want to be fingers."
-    },
-    "arms_noodle_hookers": {
-      "name": "Noodle Hookers",
-      "slot": "arms",
-      "fits_blueprints": [
-        "biped"
-      ],
-      "texture_path": "res://assets/parts/arms/arms_noodle_hookers.png",
-      "pivot": {
-        "x": 128,
-        "y": 30
-      },
-      "weight": 5,
-      "unlock_cost": 60,
+      "weight": 6,
+      "unlock_cost": 90,
       "stats": {
         "hp_bonus": 0,
         "defense": 0,
-        "speed_mod": 1.05
+        "attack_power": 12
+      },
+      "attack": {
+        "windup": 0.12,
+        "active": 0.1,
+        "recovery": 0.16,
+        "cooldown": 0.5,
+        "knockback": 90,
+        "hitstun": 0.12
       },
       "hitboxes": [
         {
           "shape": "rectangle",
           "extents": [
-            18,
-            80
+            30,
+            22
           ],
           "offset": [
-            0,
-            65
+            -30,
+            0
           ],
           "type": "hurtbox"
+        },
+        {
+          "shape": "rectangle",
+          "extents": [
+            34,
+            20
+          ],
+          "offset": [
+            -70,
+            0
+          ],
+          "type": "damage"
         }
       ],
       "effects": [
-        "speed_boost"
+        "sting_attack",
+        "ink_magnet"
       ],
-      "flavor": "Wacky. Waving. You know the rest."
+      "flavor": "Leaks constantly. Attracts its own kind."
+    },
+    "tail_rudder_fin": {
+      "name": "Rudder Fin",
+      "slot": "tail",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/tails/tail_rudder_fin.png",
+      "pivot": {
+        "x": 160,
+        "y": 128
+      },
+      "weight": 8,
+      "unlock_cost": 170,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "attack_power": 10
+      },
+      "attack": {
+        "windup": 0.12,
+        "active": 0.1,
+        "recovery": 0.16,
+        "cooldown": 0.55,
+        "knockback": 80,
+        "hitstun": 0.1
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            34,
+            26
+          ],
+          "offset": [
+            -34,
+            0
+          ],
+          "type": "hurtbox"
+        },
+        {
+          "shape": "rectangle",
+          "extents": [
+            30,
+            18
+          ],
+          "offset": [
+            -66,
+            0
+          ],
+          "type": "damage"
+        }
+      ],
+      "effects": [
+        "sting_attack",
+        "can_glide"
+      ],
+      "flavor": "Steers. Badly, but it steers."
+    },
+    "tail_whip_line": {
+      "name": "Whip Line",
+      "slot": "tail",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/tails/tail_whip_line.png",
+      "pivot": {
+        "x": 160,
+        "y": 128
+      },
+      "weight": 10,
+      "unlock_cost": 180,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "attack_power": 16
+      },
+      "attack": {
+        "windup": 0.14,
+        "active": 0.1,
+        "recovery": 0.18,
+        "cooldown": 0.6,
+        "knockback": 140,
+        "hitstun": 0.14
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            32,
+            20
+          ],
+          "offset": [
+            -32,
+            0
+          ],
+          "type": "hurtbox"
+        },
+        {
+          "shape": "rectangle",
+          "extents": [
+            46,
+            16
+          ],
+          "offset": [
+            -88,
+            0
+          ],
+          "type": "damage"
+        }
+      ],
+      "effects": [
+        "sting_attack",
+        "long_reach"
+      ],
+      "flavor": "One long line, drawn without lifting the pencil."
     },
     "tail_scorpion": {
       "name": "Scorpion Tail",
@@ -672,6 +1545,66 @@
         "sting_attack"
       ],
       "flavor": "The stinger was drawn first. Priorities."
+    },
+    "tail_kick_spring": {
+      "name": "Kick Spring",
+      "slot": "tail",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/tails/tail_kick_spring.png",
+      "pivot": {
+        "x": 160,
+        "y": 128
+      },
+      "weight": 14,
+      "unlock_cost": 190,
+      "stats": {
+        "hp_bonus": 5,
+        "defense": 0,
+        "attack_power": 20,
+        "jump_mod": 1.08
+      },
+      "attack": {
+        "windup": 0.18,
+        "active": 0.14,
+        "recovery": 0.22,
+        "cooldown": 0.75,
+        "knockback": 260,
+        "hitstun": 0.2
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            38,
+            26
+          ],
+          "offset": [
+            -36,
+            0
+          ],
+          "type": "hurtbox"
+        },
+        {
+          "shape": "rectangle",
+          "extents": [
+            34,
+            24
+          ],
+          "offset": [
+            -72,
+            0
+          ],
+          "type": "damage"
+        }
+      ],
+      "effects": [
+        "club_attack",
+        "jump_boost"
+      ],
+      "flavor": "Kicks off the ground and off other people."
     },
     "tail_eraser_club": {
       "name": "Eraser Club",
@@ -731,6 +1664,66 @@
       ],
       "flavor": "Un-draws people."
     },
+    "tail_counterweight": {
+      "name": "Counterweight",
+      "slot": "tail",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/tails/tail_counterweight.png",
+      "pivot": {
+        "x": 160,
+        "y": 128
+      },
+      "weight": 28,
+      "unlock_cost": 220,
+      "stats": {
+        "hp_bonus": 20,
+        "defense": 2,
+        "attack_power": 34,
+        "speed_mod": 0.95
+      },
+      "attack": {
+        "windup": 0.3,
+        "active": 0.16,
+        "recovery": 0.34,
+        "cooldown": 1.05,
+        "knockback": 440,
+        "hitstun": 0.28
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            46,
+            34
+          ],
+          "offset": [
+            -44,
+            0
+          ],
+          "type": "hurtbox"
+        },
+        {
+          "shape": "rectangle",
+          "extents": [
+            42,
+            34
+          ],
+          "offset": [
+            -84,
+            0
+          ],
+          "type": "damage"
+        }
+      ],
+      "effects": [
+        "club_attack",
+        "thick_hide"
+      ],
+      "flavor": "Keeps the front end honest."
+    },
     "back_bat_scraps": {
       "name": "Bat Wing Scraps",
       "slot": "back",
@@ -768,6 +1761,82 @@
       ],
       "flavor": "Holes are aerodynamic if you believe."
     },
+    "back_kite_sail": {
+      "name": "Kite Sail",
+      "slot": "back",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/backs/back_kite_sail.png",
+      "pivot": {
+        "x": 192,
+        "y": 192
+      },
+      "weight": 7,
+      "unlock_cost": 210,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            56,
+            50
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "can_glide",
+        "air_dash"
+      ],
+      "flavor": "Catches wind that is not there."
+    },
+    "back_ink_bladder": {
+      "name": "Ink Bladder",
+      "slot": "back",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/backs/back_ink_bladder.png",
+      "pivot": {
+        "x": 192,
+        "y": 192
+      },
+      "weight": 9,
+      "unlock_cost": 200,
+      "stats": {
+        "hp_bonus": 5,
+        "defense": 0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            46,
+            42
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "ink_magnet",
+        "quick_strike"
+      ],
+      "flavor": "Pressurised. Do not ask what with."
+    },
     "back_sketch_thrusters": {
       "name": "Sketch Thrusters",
       "slot": "back",
@@ -804,6 +1873,730 @@
         "double_jump"
       ],
       "flavor": "Two angry scribbles that emit smaller scribbles."
+    },
+    "back_grapple_spool": {
+      "name": "Grapple Spool",
+      "slot": "back",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/backs/back_grapple_spool.png",
+      "pivot": {
+        "x": 192,
+        "y": 192
+      },
+      "weight": 12,
+      "unlock_cost": 190,
+      "stats": {
+        "hp_bonus": 5,
+        "defense": 1
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            44,
+            44
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "wall_cling"
+      ],
+      "flavor": "Unwinds fast. Winds up slowly."
+    },
+    "back_shell_scrap": {
+      "name": "Scrap Shell",
+      "slot": "back",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/backs/back_shell_scrap.png",
+      "pivot": {
+        "x": 192,
+        "y": 192
+      },
+      "weight": 24,
+      "unlock_cost": 230,
+      "stats": {
+        "hp_bonus": 25,
+        "defense": 4
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            60,
+            52
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "thick_hide"
+      ],
+      "flavor": "Someone else's, originally."
+    },
+    "back_lead_weight": {
+      "name": "Lead Weight",
+      "slot": "back",
+      "fits_blueprints": [
+        "biped",
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/backs/back_lead_weight.png",
+      "pivot": {
+        "x": 192,
+        "y": 192
+      },
+      "weight": 32,
+      "unlock_cost": 250,
+      "stats": {
+        "hp_bonus": 15,
+        "defense": 2,
+        "speed_mod": 0.93,
+        "jump_mod": 0.92
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            52,
+            50
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "heavy_landing",
+        "thick_hide"
+      ],
+      "flavor": "Straps on. Rarely comes off."
+    },
+    "legs_front_scuttlers": {
+      "name": "Scuttler Forelegs",
+      "slot": "legs_front",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_front_scuttlers.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 5,
+      "unlock_cost": 0,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "speed_mod": 1.2,
+        "jump_mod": 1.0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            30,
+            60
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "speed_boost"
+      ],
+      "flavor": "Too many joints, all of them wrong. Very quick about it."
+    },
+    "legs_front_stub_pegs": {
+      "name": "Stub Pegs",
+      "slot": "legs_front",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_front_stub_pegs.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 8,
+      "unlock_cost": 90,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "speed_mod": 0.95,
+        "jump_mod": 1.1
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            28,
+            58
+          ],
+          "offset": [
+            0,
+            58
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "jump_boost"
+      ],
+      "flavor": "Short. Insistent."
+    },
+    "legs_front_reaching_arms": {
+      "name": "Reaching Arms",
+      "slot": "legs_front",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_front_reaching_arms.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 12,
+      "unlock_cost": 180,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "speed_mod": 1.05,
+        "jump_mod": 1.0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            30,
+            64
+          ],
+          "offset": [
+            0,
+            62
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "long_reach"
+      ],
+      "flavor": "Front legs that never quite committed to being legs."
+    },
+    "legs_front_dash_pads": {
+      "name": "Dash Pads",
+      "slot": "legs_front",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_front_dash_pads.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 16,
+      "unlock_cost": 210,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "speed_mod": 1.1,
+        "jump_mod": 1.0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            34,
+            60
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "air_dash"
+      ],
+      "flavor": "Skid marks, drawn first, legs added after."
+    },
+    "legs_front_wheelbarrow": {
+      "name": "Wheelbarrow Wheels",
+      "slot": "legs_front",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_front_wheelbarrow.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 18,
+      "unlock_cost": 200,
+      "stats": {
+        "hp_bonus": 5,
+        "defense": 0,
+        "speed_mod": 1.15,
+        "jump_mod": 0.9
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            36,
+            58
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "speed_boost",
+        "dodge_roll"
+      ],
+      "flavor": "Rolling was always the plan."
+    },
+    "legs_front_shovel_claws": {
+      "name": "Shovel Claws",
+      "slot": "legs_front",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_front_shovel_claws.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 22,
+      "unlock_cost": 160,
+      "stats": {
+        "hp_bonus": 10,
+        "defense": 1,
+        "speed_mod": 0.95,
+        "jump_mod": 1.0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            40,
+            60
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "crouch"
+      ],
+      "flavor": "Digs in, gets low, stays low."
+    },
+    "legs_front_paw_hammers": {
+      "name": "Paw Hammers",
+      "slot": "legs_front",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_front_paw_hammers.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 28,
+      "unlock_cost": 120,
+      "stats": {
+        "hp_bonus": 15,
+        "defense": 3,
+        "speed_mod": 0.9,
+        "jump_mod": 0.95
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            42,
+            60
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [],
+      "flavor": "Drawn heavy, so they land heavy."
+    },
+    "legs_front_iron_pistons": {
+      "name": "Iron Pistons",
+      "slot": "legs_front",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_front_iron_pistons.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 36,
+      "unlock_cost": 250,
+      "stats": {
+        "hp_bonus": 25,
+        "defense": 4,
+        "speed_mod": 0.85,
+        "jump_mod": 0.85
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            46,
+            62
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "thick_hide",
+        "heavy_landing"
+      ],
+      "flavor": "Each step is an event."
+    },
+    "legs_rear_haunches": {
+      "name": "Spring Haunches",
+      "slot": "legs_rear",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_rear_haunches.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 5,
+      "unlock_cost": 0,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "speed_mod": 1.0,
+        "jump_mod": 1.2
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            30,
+            60
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "jump_boost"
+      ],
+      "flavor": "All the pounce lives back here."
+    },
+    "legs_rear_scuttle_pair": {
+      "name": "Scuttle Pair",
+      "slot": "legs_rear",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_rear_scuttle_pair.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 9,
+      "unlock_cost": 90,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "speed_mod": 1.12,
+        "jump_mod": 1.0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            30,
+            58
+          ],
+          "offset": [
+            0,
+            58
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "speed_boost"
+      ],
+      "flavor": "Keeping up, barely, loudly."
+    },
+    "legs_rear_glider_flaps": {
+      "name": "Glider Flaps",
+      "slot": "legs_rear",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_rear_glider_flaps.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 12,
+      "unlock_cost": 200,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "speed_mod": 1.0,
+        "jump_mod": 1.05
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            34,
+            60
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "can_glide"
+      ],
+      "flavor": "Hind legs with opinions about air."
+    },
+    "legs_rear_kicker_pair": {
+      "name": "Kicker Pair",
+      "slot": "legs_rear",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_rear_kicker_pair.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 14,
+      "unlock_cost": 150,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "speed_mod": 1.05,
+        "jump_mod": 1.0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            34,
+            60
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "dodge_roll"
+      ],
+      "flavor": "Backwards is a direction too."
+    },
+    "legs_rear_coiled_springs": {
+      "name": "Coiled Springs",
+      "slot": "legs_rear",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_rear_coiled_springs.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 18,
+      "unlock_cost": 240,
+      "stats": {
+        "hp_bonus": 5,
+        "defense": 0,
+        "speed_mod": 0.98,
+        "jump_mod": 1.3
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            32,
+            62
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "jump_boost",
+        "double_jump"
+      ],
+      "flavor": "Loaded. Permanently."
+    },
+    "legs_rear_stiff_planks": {
+      "name": "Stiff Planks",
+      "slot": "legs_rear",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_rear_stiff_planks.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 24,
+      "unlock_cost": 170,
+      "stats": {
+        "hp_bonus": 10,
+        "defense": 2,
+        "speed_mod": 0.92,
+        "jump_mod": 1.0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            40,
+            60
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "thick_hide"
+      ],
+      "flavor": "They do not bend. That is the whole design."
+    },
+    "legs_rear_dragging_stumps": {
+      "name": "Dragging Stumps",
+      "slot": "legs_rear",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_rear_dragging_stumps.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 30,
+      "unlock_cost": 120,
+      "stats": {
+        "hp_bonus": 25,
+        "defense": 3,
+        "speed_mod": 0.85,
+        "jump_mod": 0.85
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            44,
+            60
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "crouch"
+      ],
+      "flavor": "They do not so much walk as get taken along."
+    },
+    "legs_rear_ballast_sacks": {
+      "name": "Ballast Sacks",
+      "slot": "legs_rear",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_rear_ballast_sacks.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 34,
+      "unlock_cost": 250,
+      "stats": {
+        "hp_bonus": 30,
+        "defense": 4,
+        "speed_mod": 0.85,
+        "jump_mod": 0.8
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            46,
+            62
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "thick_hide",
+        "heavy_landing"
+      ],
+      "flavor": "Keeps the back end on the ground where it belongs."
     }
   }
 }

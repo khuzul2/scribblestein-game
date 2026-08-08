@@ -66,6 +66,19 @@ func test_the_glide_gap_has_margin_on_both_sides() -> void:
 		"and no glide build has to be pixel perfect")
 
 
+func test_the_glide_ledge_hangs_over_the_route_rather_than_across_it() -> void:
+	# The ledge is a reward you fly to, not a wall you meet. It floats above the
+	# chasm floor, so the head-room underneath has to clear the tallest legal
+	# creature — otherwise the critical path is blocked for anyone who cannot
+	# glide, which is the exact opposite of what the gate is for.
+	var clearance: float = float(_script().get("LEDGE_CLEARANCE")) \
+		- float(_script().get("LEDGE_THICKNESS"))
+	var tallest: float = JumpMath.standing_height_range().y
+	is_true(clearance > tallest,
+		"%.0f px of head-room under the ledge clears the tallest build (%.0f px)"
+			% [clearance, tallest])
+
+
 func test_the_climb_shaft_is_taller_than_any_jump_in_the_game() -> void:
 	var shaft: float = float(_script().get("SHAFT_HEIGHT"))
 	var best_apex: float = 0.0

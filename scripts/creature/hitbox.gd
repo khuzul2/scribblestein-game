@@ -69,6 +69,34 @@ static func _build_shape(entry: Dictionary) -> Shape2D:
 	return rectangle
 
 
+## Grow (or shrink) the collision shape about its own centre, leaving the box's
+## offset alone. Used by `long_reach`, which lengthens an attack's reach without
+## moving where it points.
+##
+## The shape is replaced rather than mutated: the one built from JSON may be
+## shared, and resizing in place would silently resize every other box built
+## from the same entry.
+func scale_shape(factor: float) -> void:
+	if _shape_node == null or is_equal_approx(factor, 1.0):
+		return
+	var circle: CircleShape2D = _shape_node.shape as CircleShape2D
+	if circle != null:
+		var grown_circle: CircleShape2D = CircleShape2D.new()
+		grown_circle.radius = circle.radius * factor
+		_shape_node.shape = grown_circle
+		return
+	var rectangle: RectangleShape2D = _shape_node.shape as RectangleShape2D
+	if rectangle != null:
+		var grown_rect: RectangleShape2D = RectangleShape2D.new()
+		grown_rect.size = rectangle.size * factor
+		_shape_node.shape = grown_rect
+
+
+## The box's current shape, whatever `long_reach` and friends have done to it.
+func shape() -> Shape2D:
+	return _shape_node.shape if _shape_node != null else null
+
+
 ## Turn the box on or off without reparenting or freeing it.
 ##
 ## Applied immediately rather than deferred, so `is_enabled()` and the debug

@@ -9,23 +9,39 @@ extends PlayScene
 ## is the loop's teaching moment — you can see the reward, and you come back for
 ## it once you have the part.
 ##
-## Every gate dimension below is checked against `JumpMath` over all 648 legal
-## loadouts in `tests/test_level_01.gd`, so "impassable without a glide part" is
-## a proof rather than a hope.
+## Every gate dimension below is checked against `LoadoutSpace` over the whole
+## loadout space in `tests/test_level_01.gd`, so "impassable without a glide
+## part" is a proof rather than a hope.
 
 # --- gate dimensions, all proved in tests/test_level_01.gd ---------------------
 ## Horizontal reach to the glide ledge, and how far below the launch lip it sits.
-## The best non-glide build in the game reaches 461 px at this drop; the *worst*
-## glide build reaches 628. 540 sits between them.
-const GLIDE_GAP: float = 540.0
-const GLIDE_DROP: float = 380.0
-## Head-room in the crawl tunnel. Legal builds stand 366-462 px tall and crouch
+##
+## The drop is what makes this a gate. A glide converts height into *time* at a
+## fixed fall speed, so its reach grows linearly with the drop, while a jump's
+## grows with the square root of it. At the 380 px this ledge used to sit at, the
+## catalogue's best light double-jumper (513 px) out-reaches the worst heavy
+## glider (465 px) and the gate does not hold. At 800 px the curves have crossed
+## properly: the best non-glide build manages 612 px and the worst glide build
+## 892 px, so 750 is impassable without wings by 138 px and clears with them by
+## 142 px — a real gap on both sides rather than a pixel-perfect one.
+const GLIDE_GAP: float = 750.0
+const GLIDE_DROP: float = 800.0
+## Head-room in the crawl tunnel. Legal builds stand 354-480 px tall and crouch
 ## to half that, so 300 admits every crouching or rolling creature and no
 ## standing one.
 const TUNNEL_CLEARANCE: float = 300.0
 ## The climb shaft is taller than any jump in the game can reach (the best is
 ## 378 px, including a double jump), so it is a pure `can_climb` gate.
 const SHAFT_HEIGHT: float = 760.0
+
+## The glide ledge's thickness, and how far the chasm floor sits below its top.
+##
+## The gap between the two — `LEDGE_CLEARANCE - LEDGE_THICKNESS` — is head-room
+## on the chasm's walking route, so it has to clear the *tallest* legal creature
+## (480 px). The ledge is a reward hanging over the way out, never a wall across
+## it; `tests/test_level_01.gd` asserts the clearance against the real number.
+const LEDGE_THICKNESS: float = 60.0
+const LEDGE_CLEARANCE: float = 620.0
 
 const GROUND_DEPTH: float = 400.0
 
@@ -92,7 +108,11 @@ func _build_crawl_tunnel() -> void:
 ## holds a Blueprint Sketch and can only be reached on a glide.
 func _build_chasm() -> void:
 	var lip_x: float = 3900.0
-	_chasm_floor_y = 760.0
+	# Derived, not chosen: the glide ledge hangs GLIDE_DROP below the lip, so the
+	# chasm has to bottom out below it or the "ledge" is buried in the floor and
+	# the gate is decoration. The clearance is what makes it read as a ledge out
+	# over a drop rather than a step.
+	_chasm_floor_y = GLIDE_DROP + LEDGE_CLEARANCE
 
 	add_warning_sketch(Vector2(lip_x - 260.0, -760.0), "wings\nreach the ledge")
 	add_ground(Rect2(lip_x - 500.0, _chasm_floor_y, 2400.0, GROUND_DEPTH))
@@ -105,7 +125,7 @@ func _build_chasm() -> void:
 		_place_ink(Vector2(lip_x - 400.0 + 70.0 * float(index), _chasm_floor_y - 60.0), 14)
 
 	# The glide-only ledge, GLIDE_GAP across and GLIDE_DROP down from the lip.
-	add_ground(Rect2(lip_x + GLIDE_GAP, GLIDE_DROP, 300.0, 60.0))
+	add_ground(Rect2(lip_x + GLIDE_GAP, GLIDE_DROP, 300.0, LEDGE_THICKNESS))
 	_place_sketch(Vector2(lip_x + GLIDE_GAP + 150.0, GLIDE_DROP - 70.0), "arms_climber_claws")
 	_place_ink(Vector2(lip_x + GLIDE_GAP + 60.0, GLIDE_DROP - 70.0), 20)
 

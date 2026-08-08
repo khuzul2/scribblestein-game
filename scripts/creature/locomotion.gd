@@ -17,8 +17,9 @@ signal jumped(kind: String)
 signal landed(fall_speed: float)
 signal state_changed(state: State)
 signal broke_cracked_floor(floor_node: Node)
+signal dashed
 
-enum State { GROUND, AIR, GLIDE, CLIMB, ROLL, CROUCH }
+enum State { GROUND, AIR, GLIDE, CLIMB, ROLL, CROUCH, CLING, DASH }
 
 ## Pixels between footsteps, and how often the wings and claws are heard.
 const STEP_SPACING_PX: float = 110.0
@@ -56,6 +57,10 @@ var _launching: bool = false
 ## Whether the current launch has actually left the floor yet — a launch is set
 ## on the frame the jump fires, while the creature is still grounded.
 var _launch_left_ground: bool = false
+## Air dash: how much of the burst is left, and whether it has been spent this
+## airtime. Both reset the moment the creature touches ground or holds a wall.
+var _dash_remaining: float = 0.0
+var _dash_used: bool = false
 
 
 func _ready() -> void:
@@ -104,31 +109,41 @@ func _physics_process(delta: float) -> void:
 	var on_floor: bool = creature.is_on_floor()
 	if on_floor:
 		_coyote_remaining = Config.cfg_float("movement.coyote_time")
-		_double_jump_used = false
+		_reset_air_moves()
 	if intent.jump_pressed:
 		_jump_buffer_remaining = Config.cfg_float("movement.jump_buffer")
 
 	var climbing: bool = _update_climb(on_floor)
+	var clinging: bool = not climbing and _update_cling(on_floor)
 	var rolling: bool = _update_roll(on_floor, delta)
+	var dashing: bool = _update_dash(on_floor, climbing or clinging)
 	_update_crouch(on_floor, rolling, climbing)
 
-	if not climbing and not rolling:
+	if not climbing and not clinging and not rolling and not dashing:
 		_update_jump(on_floor, climbing)
 
-	_move_horizontally(delta, on_floor, climbing, rolling)
+	if not dashing:
+		_move_horizontally(delta, on_floor, climbing, rolling)
 
 	if climbing:
 		creature.velocity.y = -Config.cfg_float("movement.climb.climb_speed") \
 			if intent.climb_held else 0.0
-		_double_jump_used = false
+		_reset_air_moves()
+	elif clinging:
+		# A cling holds the face and slides; it never lifts you.
+		creature.velocity.y = Config.cfg_float("movement.wall_cling.slide_speed")
+		_reset_air_moves()
+	elif dashing:
+		creature.velocity.y = 0.0  # a dash is flat; gravity is suspended for it
 	elif not rolling or not on_floor:
 		_apply_gravity(delta, _fall_cap())
 
 	var before_move: float = creature.velocity.y
 	creature.move_and_slide()
-	_finish_gravity(delta, climbing)
+	if not dashing:
+		_finish_gravity(delta, climbing or clinging)
 	_detect_landing(before_move)
-	_set_state(on_floor, climbing, rolling)
+	_set_state(on_floor, climbing, rolling, clinging, dashing)
 
 	_tick_footsteps(delta)
 
@@ -165,6 +180,7 @@ func _tick_timers(delta: float) -> void:
 	_jump_buffer_remaining = maxf(0.0, _jump_buffer_remaining - delta)
 	_roll_remaining = maxf(0.0, _roll_remaining - delta)
 	_roll_cooldown_remaining = maxf(0.0, _roll_cooldown_remaining - delta)
+	_dash_remaining = maxf(0.0, _dash_remaining - delta)
 	stun_remaining = maxf(0.0, stun_remaining - delta)
 
 
@@ -402,6 +418,64 @@ func is_rolling() -> bool:
 	return _roll_remaining > 0.0
 
 
+# --- air dash & wall cling -----------------------------------------------------
+
+## Everything you get back by touching solid ground — or a wall, if you can hold
+## one. Kept in one place so a new air move cannot be forgotten in one of them.
+func _reset_air_moves() -> void:
+	_double_jump_used = false
+	_dash_used = false
+
+
+## One committed horizontal burst per airtime (`effects.json → air_dash`).
+##
+## Fired by a crouch press in the air, which is otherwise a dead input while
+## airborne — a roll needs the ground. Gravity is suspended for the burst, which
+## is what makes a dash a distinct traversal key rather than a fast fall.
+func _update_dash(on_floor: bool, on_wall: bool) -> bool:
+	if _dash_remaining > 0.0:
+		creature.velocity.x = float(creature.facing) * _dash_speed()
+		return true
+
+	if on_floor or on_wall or _dash_used or stun_remaining > 0.0:
+		return false
+	if not intent.crouch_pressed or not creature.has_effect("air_dash"):
+		return false
+
+	if absf(intent.move_axis) > 0.2:
+		creature.facing = 1 if intent.move_axis > 0.0 else -1
+	_dash_remaining = Config.cfg_float("movement.air_dash.duration")
+	_dash_used = true
+	var iframes: float = Config.cfg_float("movement.air_dash.iframes")
+	if iframes > 0.0:
+		creature.health.grant_iframes(iframes)
+	Audio.sfx("sfx_roll_swish", 0.15)
+	creature.velocity = Vector2(float(creature.facing) * _dash_speed(), 0.0)
+	dashed.emit()
+	return true
+
+
+## Fixed distance over a fixed duration, exactly like a roll.
+func _dash_speed() -> float:
+	return Config.cfg_float("movement.air_dash.distance") \
+		/ Config.cfg_float("movement.air_dash.duration")
+
+
+## Hold a climbable face and slide instead of falling (`effects.json →
+## wall_cling`). It only ever holds — ascending needs `can_climb` — so a cling
+## build reaches a ledge by clinging, dropping to the bottom of its slide and
+## jumping again, not by going up the wall.
+func _update_cling(on_floor: bool) -> bool:
+	if on_floor or not creature.has_effect("wall_cling") or stun_remaining > 0.0:
+		return false
+	if not touching_climbable():
+		return false
+	# Pressing into the wall, or already falling onto it with no input.
+	if absf(intent.move_axis) > 0.2 and signf(intent.move_axis) != signf(float(creature.facing)):
+		return false
+	return creature.velocity.y >= 0.0
+
+
 # --- climbing ------------------------------------------------------------------
 
 func _update_climb(_on_floor: bool) -> bool:
@@ -431,12 +505,17 @@ func _detect_landing(fall_speed_before_move: float) -> void:
 	_was_on_floor = on_floor
 
 
-## Heavy alone stomps through cracked floors, and only above the landing speed
-## its preset names (DESIGN §5, §9 — this is a level-design key).
+## Heavy stomps through cracked floors above the landing speed its preset names
+## (DESIGN §5, §9 — this is a level-design key), and so does anything wearing
+## `heavy_landing`, which is how a light build buys its way through the same
+## door. The speed threshold still applies: you have to actually drop onto it.
 func _try_break_cracked_floor(fall_speed: float) -> void:
-	if not creature.weight_class.breaks_cracked_floors():
+	var by_class: bool = creature.weight_class.breaks_cracked_floors()
+	if not by_class and not creature.has_effect("heavy_landing"):
 		return
-	if fall_speed < creature.weight_class.crack_break_min_land_speed():
+	var threshold: float = creature.weight_class.crack_break_min_land_speed() if by_class \
+		else Config.cfg_float("movement.weight_classes.heavy.crack_break_min_land_speed")
+	if fall_speed < threshold:
 		return
 	for index: int in range(creature.get_slide_collision_count()):
 		var collision: KinematicCollision2D = creature.get_slide_collision(index)
@@ -452,12 +531,17 @@ func last_fall_speed() -> float:
 
 # --- state ---------------------------------------------------------------------
 
-func _set_state(on_floor: bool, climbing: bool, rolling: bool) -> void:
+func _set_state(on_floor: bool, climbing: bool, rolling: bool,
+		clinging: bool = false, dashing: bool = false) -> void:
 	var next: State = State.AIR
-	if rolling:
+	if dashing:
+		next = State.DASH
+	elif rolling:
 		next = State.ROLL
 	elif climbing:
 		next = State.CLIMB
+	elif clinging:
+		next = State.CLING
 	elif on_floor:
 		next = State.CROUCH if _crouched else State.GROUND
 	elif is_gliding():

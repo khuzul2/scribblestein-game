@@ -40,6 +40,15 @@ var facing: int = 1:
 		facing = normalised
 		if skeleton != null:
 			skeleton.scale.x = float(facing)
+		# The body collider and the climb sensor are siblings of the skeleton,
+		# so the flip above does not reach them — and they are fitted to the
+		# hurtbox union, which is not symmetric for anything with a tail. Left
+		# alone, a Stinger that turns to face you carries a 175 px slab of
+		# collider sticking out of its chest: it walls off corridors and holds
+		# attackers outside their own reach while its hurtboxes sit elsewhere.
+		# Re-fitting reads the flipped hurtboxes and lands them correctly.
+		if hitbox_root != null:
+			_fit_body_collider()
 		facing_changed.emit(facing)
 
 var _visual_bounds: Rect2 = Rect2()

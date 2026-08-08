@@ -84,11 +84,23 @@ func test_stat_deltas_describe_the_swap_they_promise() -> void:
 	var editor: SketchbookEditor = _open_editor()
 	SaveManager.unlock_part("head_anvil")
 	var deltas: Dictionary = editor.deltas_for("head", "head_anvil")
-	# maw: +20 hp, 0 def, 15 weight, 35 atk. anvil: +30 hp, 2 def, 40 weight, 50 atk.
-	almost(float(deltas["hp"]), 10.0, 0.001, "HP delta")
-	almost(float(deltas["def"]), 2.0, 0.001, "defense delta")
-	almost(float(deltas["weight"]), 25.0, 0.001, "weight delta")
-	almost(float(deltas["atk"]), 15.0, 0.001, "attack delta")
+	# Read from the catalogue, not written down: the readout's job is to be the
+	# difference between two parts, whatever those parts currently are.
+	var worn: Dictionary = Config.part("head_monster_maw")["stats"] as Dictionary
+	var candidate: Dictionary = Config.part("head_anvil")["stats"] as Dictionary
+	almost(float(deltas["hp"]),
+		float(candidate.get("hp_bonus", 0.0)) - float(worn.get("hp_bonus", 0.0)),
+		0.001, "HP delta")
+	almost(float(deltas["def"]),
+		float(candidate.get("defense", 0.0)) - float(worn.get("defense", 0.0)),
+		0.001, "defense delta")
+	almost(float(deltas["weight"]),
+		float(Config.part("head_anvil")["weight"])
+			- float(Config.part("head_monster_maw")["weight"]),
+		0.001, "weight delta")
+	almost(float(deltas["atk"]),
+		float(candidate.get("attack_power", 0.0)) - float(worn.get("attack_power", 0.0)),
+		0.001, "attack delta")
 
 
 # --- drag and drop -------------------------------------------------------------
