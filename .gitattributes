@@ -1,0 +1,17 @@
+# Later rules win, so the catch-all goes first and the specific ones after it.
+
+# Text is LF in the repo and LF on checkout, whatever the platform.
+* text=auto eol=lf
+
+# Windows batch files are the exception: they must arrive with CRLF. cmd.exe
+# seeks by byte offset when it follows a `goto`, and an LF-only file can land it
+# mid-line and misbehave in ways that look like the script is haunted.
+*.bat text eol=crlf
+
+# Art and audio are never line-ending-normalised. Git's binary detection already
+# gets this right, but a mangled PNG is an expensive thing to debug, so say it.
+*.png binary
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.ttf binary

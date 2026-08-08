@@ -67,10 +67,9 @@ static func control_theme() -> Theme:
 	var flat: StyleBoxFlat = panel(BORDER_WIDTH - 1)
 	flat.set_content_margin_all(PADDING / 2)
 
-	for control: String in ["LineEdit", "OptionButton", "SpinBox", "Button",
-			"CheckBox", "PopupMenu", "ScrollContainer", "PanelContainer"]:
-		theme.set_type_variation(control, control)
-
+	# No `set_type_variation` here: a built-in class cannot be a variation of
+	# itself, and 4.7 says so out loud. Setting a stylebox or a colour on a type
+	# name registers that type in the theme, which is all that was ever wanted.
 	for control: String in ["LineEdit", "OptionButton", "PopupMenu"]:
 		for state: String in ["normal", "focus", "hover", "pressed", "panel"]:
 			theme.set_stylebox(state, control, flat)

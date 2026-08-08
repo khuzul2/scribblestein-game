@@ -29,6 +29,27 @@ code, ever.
 
 ## Playing it
 
+**Windows, from a fresh clone:** double-click **`game.bat`**. It finds Godot —
+downloading the pinned 4.7.1 build into `bin/` if you do not have it — imports
+the assets on first run, and starts the game. A Godot already on your `PATH` is
+used only if it is 4.7.1, so an older install lying around cannot quietly change
+how the game runs; set `GODOT` to an executable path to override that entirely.
+
+```bat
+game.bat            play
+game.bat editor     straight into the level editor
+game.bat lab        straight into the Lab
+game.bat level      straight into Level 01
+game.bat test       run the test suite (headless)
+game.bat check      validate the art and the data (headless)
+game.bat godot      open the project in the Godot editor
+```
+
+Everything you make — saves, levels, soundtracks — lives outside the repo, in
+`%APPDATA%\Godot\app_userdata\Scribblestein`.
+
+**Anywhere, with Godot 4.7.1 on your `PATH`:**
+
 ```bash
 godot --headless --import          # once, on a fresh clone (run twice)
 godot                              # boots into The Lab
