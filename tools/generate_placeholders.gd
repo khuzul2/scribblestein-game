@@ -66,46 +66,90 @@ func _generate_part(part_id: String, part: Dictionary) -> void:
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = hash(part_id)
 
-	for polygon: PackedVector2Array in _silhouette(slot, Vector2(width, height), pivot, rng):
+	var shapes: Array[PackedVector2Array] = _silhouette(part, slot, Vector2(width, height), pivot, rng)
+	var ink: Rect2 = Rect2()
+	for polygon: PackedVector2Array in shapes:
 		_stroke_closed(image, polygon, rng.randi_range(4, 6), rng)
 		_hatch(image, polygon, rng)
+		ink = _bounds(polygon) if ink.size == Vector2.ZERO else ink.merge(_bounds(polygon))
 
 	_draw_pivot_tick(image, pivot)
-	_label(image, part_id, Vector2(width, height), rng)
+	# Inside the silhouette, never below it: a label floating in the canvas
+	# margin would inflate the ink bounds the camera measures.
+	_label(image, part_id, ink, rng)
 
 	_save(image, str(part["texture_path"]))
 
 
-## Rough, deliberately wrong silhouettes per slot, anchored on the part's pivot
-## so the placeholder lands on its bone exactly where the final art will.
-func _silhouette(slot: String, canvas: Vector2, pivot: Vector2,
+## Rough, deliberately wrong silhouettes, anchored on the part's pivot and sized
+## from the part's own hurtbox so the placeholder is *truthful*: what you see is
+## the volume that can be hit. Parts with no hurtbox fall back to canvas fractions.
+func _silhouette(part: Dictionary, slot: String, canvas: Vector2, pivot: Vector2,
 		rng: RandomNumberGenerator) -> Array[PackedVector2Array]:
 	var shapes: Array[PackedVector2Array] = []
+	var hurt: Dictionary = _hurtbox(part)
+	var centre: Vector2 = pivot + _offset_of(hurt)
+	var extents: Vector2 = _extents_of(hurt)
+
 	match slot:
 		"torso":
-			shapes.append(_blob(pivot, Vector2(canvas.x * 0.34, canvas.y * 0.36), 13, rng))
+			shapes.append(_blob(centre, extents, 13, rng))
 		"head":
-			shapes.append(_blob(pivot + Vector2(0, -canvas.y * 0.33),
-				Vector2(canvas.x * 0.36, canvas.y * 0.30), 11, rng))
-		"legs", "legs_front", "legs_rear":
-			shapes.append(_limb(pivot + Vector2(-canvas.x * 0.14, 0), canvas.y * 0.80, canvas.x * 0.11, rng))
-			shapes.append(_limb(pivot + Vector2(canvas.x * 0.14, 0), canvas.y * 0.80, canvas.x * 0.10, rng))
-		"arms":
-			shapes.append(_limb(pivot + Vector2(-canvas.x * 0.20, 0), canvas.y * 0.78, canvas.x * 0.11, rng))
-			shapes.append(_limb(pivot + Vector2(canvas.x * 0.20, 0), canvas.y * 0.78, canvas.x * 0.10, rng))
+			# The canvas puts the neck joint at bottom-centre, so the skull is
+			# drawn above the pivot even though its hurtbox straddles the joint.
+			shapes.append(_blob(pivot + Vector2(0, -extents.y * 1.05), extents * 1.15, 11, rng))
+		"legs", "legs_front", "legs_rear", "arms":
+			var reach: float = _offset_of(hurt).y + extents.y
+			var half_width: float = extents.x * (0.42 if slot == "arms" else 0.46)
+			var spread: float = extents.x * (0.0 if slot == "arms" else 0.5)
+			shapes.append(_limb(pivot + Vector2(-spread, 0), reach, half_width, rng))
+			if slot != "arms":
+				shapes.append(_limb(pivot + Vector2(spread, 0), reach, half_width * 0.92, rng))
 		"tail":
-			# ASSET_SPEC §1: root at left-centre, drawn facing right. The assembler
-			# mirrors it onto the tail bone so it trails behind the creature.
-			shapes.append(_taper(pivot, Vector2(canvas.x * 0.85, -canvas.y * 0.22),
-				canvas.y * 0.30, rng))
+			# Reach to the far edge of the sting, so the drawing ends where the
+			# damage box does. Authored root-at-left facing right (ASSET_SPEC §1).
+			var damage: Dictionary = _damage_box(part)
+			var span: float = absf(_offset_of(damage).x) + _extents_of(damage).x
+			shapes.append(_taper(pivot, Vector2(maxf(span, canvas.x * 0.4), -extents.y * 1.2),
+				extents.y * 2.0, rng))
 		"back":
-			shapes.append(_blob(pivot + Vector2(-canvas.x * 0.19, -canvas.y * 0.32),
-				Vector2(canvas.x * 0.20, canvas.y * 0.24), 9, rng))
-			shapes.append(_blob(pivot + Vector2(canvas.x * 0.19, -canvas.y * 0.32),
-				Vector2(canvas.x * 0.20, canvas.y * 0.24), 9, rng))
+			# No hurtbox on the back parts; sized to read as wings behind a torso.
+			var wing: Vector2 = Vector2(canvas.x * 0.13, canvas.y * 0.17)
+			shapes.append(_blob(pivot + Vector2(-wing.x * 1.15, -wing.y * 0.15), wing, 9, rng))
+			shapes.append(_blob(pivot + Vector2(wing.x * 1.15, -wing.y * 0.15), wing, 9, rng))
 		_:
-			shapes.append(_blob(pivot, Vector2(canvas.x * 0.3, canvas.y * 0.3), 10, rng))
+			shapes.append(_blob(centre, extents, 10, rng))
 	return shapes
+
+
+func _hurtbox(part: Dictionary) -> Dictionary:
+	return _first_box(part, "hurtbox")
+
+
+func _damage_box(part: Dictionary) -> Dictionary:
+	return _first_box(part, "damage")
+
+
+func _first_box(part: Dictionary, wanted: String) -> Dictionary:
+	for entry: Variant in part.get("hitboxes", []) as Array:
+		if str((entry as Dictionary).get("type", "")) == wanted:
+			return entry as Dictionary
+	return {}
+
+
+func _offset_of(box: Dictionary) -> Vector2:
+	var offset: Array = box.get("offset", [0, 0]) as Array
+	return Vector2(float(offset[0]), float(offset[1]))
+
+
+func _extents_of(box: Dictionary) -> Vector2:
+	if box.is_empty():
+		return Vector2(60.0, 60.0)
+	if str(box.get("shape", "")) == "circle":
+		var radius: float = float(box["radius"])
+		return Vector2(radius, radius)
+	var extents: Array = box["extents"] as Array
+	return Vector2(float(extents[0]), float(extents[1]))
 
 
 func _blob(centre: Vector2, radii: Vector2, points: int, rng: RandomNumberGenerator) -> PackedVector2Array:
@@ -306,14 +350,17 @@ func _draw_pivot_tick(image: Image, pivot: Vector2) -> void:
 		_dot(image, Vector2(pivot.x, pivot.y + offset), 1)
 
 
-func _label(image: Image, text: String, canvas: Vector2, rng: RandomNumberGenerator) -> void:
-	var scale: int = 3
+func _label(image: Image, text: String, ink: Rect2, rng: RandomNumberGenerator) -> void:
+	var scale: int = 1
 	var width: int = ScribbleFont.measure(text, scale)
-	while width > int(canvas.x) - 12 and scale > 1:
+	while width > int(ink.size.x) - 4 and scale > 1:
 		scale -= 1
 		width = ScribbleFont.measure(text, scale)
-	ScribbleFont.draw(image, text, int((canvas.x - float(width)) * 0.5),
-		int(canvas.y) - ScribbleFont.GLYPH_HEIGHT * scale - 6, scale, rng)
+	var height: int = ScribbleFont.GLYPH_HEIGHT * scale
+	var x: int = int(ink.get_center().x - float(width) * 0.5)
+	var y: int = int(ink.end.y) - height - 4
+	ScribbleFont.draw(image, text, clampi(x, 1, image.get_width() - width - 1),
+		clampi(y, 1, image.get_height() - height - 1), scale, rng)
 
 
 func _bounds(polygon: PackedVector2Array) -> Rect2:

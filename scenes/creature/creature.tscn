@@ -1,0 +1,31 @@
+[gd_scene load_steps=7 format=3 uid="uid://cscribbcreature"]
+
+[ext_resource type="Script" path="res://scripts/creature/creature.gd" id="1_creature"]
+[ext_resource type="Script" path="res://scripts/creature/hitbox_root.gd" id="2_hitboxroot"]
+[ext_resource type="Script" path="res://scripts/creature/health.gd" id="3_health"]
+[ext_resource type="Script" path="res://scripts/creature/attack_controller.gd" id="4_attack"]
+[ext_resource type="Script" path="res://scripts/creature/weight_class.gd" id="5_weight"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(80, 160)
+
+[node name="Creature" type="CharacterBody2D"]
+script = ExtResource("1_creature")
+
+[node name="Skeleton2D" type="Skeleton2D" parent="."]
+
+[node name="BodyCollider" type="CollisionShape2D" parent="."]
+position = Vector2(0, -80)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="HitboxRoot" type="Node2D" parent="."]
+script = ExtResource("2_hitboxroot")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("3_health")
+
+[node name="AttackController" type="Node" parent="."]
+script = ExtResource("4_attack")
+
+[node name="WeightClass" type="Node" parent="."]
+script = ExtResource("5_weight")

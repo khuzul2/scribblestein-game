@@ -9,6 +9,12 @@ extends Node
 
 signal scene_changed(scene_id: String)
 
+## Stable scene ids -> resources. Save data, the world map and `--scene=` all
+## address scenes by id, never by path.
+const SCENES: Dictionary = {
+	"rig_preview": "res://scenes/dev/rig_preview.tscn",
+}
+
 @onready var scene_root: Node = $SceneRoot
 
 var current_scene_id: String = ""
@@ -23,6 +29,14 @@ func _ready() -> void:
 	print("Scribblestein booted — %d parts, %d blueprints, %d enemies, %d effects." % [
 		Config.parts.size(), Config.blueprints.size(),
 		Config.enemies.size(), Config.effects.size()])
+
+	if DevTools.has_option("scene"):
+		var requested: String = str(DevTools.option("scene"))
+		if SCENES.has(requested):
+			goto(requested, str(SCENES[requested]))
+		else:
+			push_error("Unknown --scene='%s'. Known: %s"
+				% [requested, ", ".join(PackedStringArray(SCENES.keys()))])
 
 
 ## Swap the active scene. `scene_id` is a stable key used by save data and the
