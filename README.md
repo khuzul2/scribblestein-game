@@ -1,6 +1,6 @@
 # Scribblestein
 
-A 2D modular platformer / creature-creator (metroidvania-lite) for **Godot 4.4**.
+A 2D modular platformer / creature-creator (metroidvania-lite) for **Godot 4.7**.
 Build a Frankenstein creature from badly drawn body parts — the assembly IS the
 character sheet. Stark black-and-white "ignorant style" pencil-sketch aesthetic
 with a line-boil shader over perfectly smooth physics.
@@ -71,20 +71,20 @@ stand-ins for hand-drawn linework and recorded mouth noises. Replacing a file
 requires no code change; the validator will tell you if a replacement breaks the
 palette, the canvas size or the naming.
 
-**Open questions:** six contradictions inside the spec pack are written up in
-[`DECISIONS_NEEDED.md`](DECISIONS_NEEDED.md) rather than resolved silently. Three
-of them affect play (the Light weight class is unreachable, the starter bite
-cannot hit a grounded Stinger, and a dodge roll cannot fit through a crawl
-tunnel); each prints a warning on every boot and each has options and a
-recommendation waiting for a human call.
+**Spec contradictions:** six contradictions inside the spec pack were written up
+in [`DECISIONS_NEEDED.md`](DECISIONS_NEEDED.md) rather than resolved silently,
+and all six were ruled on before M8 — the Light weight class is now reachable, the
+starter bite can hit every enemy, and a dodge roll traverses a crawl tunnel. Boot
+validation raises zero issues, `data/validation_waivers.json` is empty, and
+`tests/test_decisions.gd` pins every ruling.
 
 ## Requirements
-Godot **4.4.x** (Compatibility renderer). Validate data + assets headlessly:
+Godot **4.7.x** (Compatibility renderer). Validate data + assets headlessly:
 `godot --headless -s tools/validate_assets.gd` (available after M0).
 
 ## Building & checking locally
 
-Requires Godot **4.4.1** on `PATH` as `godot`.
+Requires Godot **4.7.1** on `PATH` as `godot`.
 
 ```bash
 godot --headless --import                       # import assets (run twice on a clean clone)
@@ -97,6 +97,7 @@ godot --headless --quit                         # boot smoke test
 
 CI (`.github/workflows/ci.yml`) runs all of the above on every push.
 
-Unresolved contradictions between spec sources are recorded in
-[`DECISIONS_NEEDED.md`](DECISIONS_NEEDED.md); any that are waived to keep the
-build moving are listed in `data/validation_waivers.json` and printed on every boot.
+Contradictions between spec sources are recorded in
+[`DECISIONS_NEEDED.md`](DECISIONS_NEEDED.md) with their rulings; any that are
+waived to keep the build moving are listed in `data/validation_waivers.json` and
+printed on every boot. That file is currently empty — nothing is being waived.

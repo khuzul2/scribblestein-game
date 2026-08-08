@@ -79,6 +79,32 @@ func music(music_id: String) -> void:
 	_music.play()
 
 
+## Release the players and the stream index before the engine tears the ObjectDB
+## down, so nothing this node owns outlives it.
+##
+## Note: `--headless --quit` still prints one "resources still in use at exit"
+## for the track that was playing. That reference belongs to the AudioServer's
+## playback, which is only reclaimed on an audio-server iteration that a
+## first-frame quit never reaches. It is a teardown artefact, not a live leak —
+## the exit code is unaffected. Suppressing it by not playing under the Dummy
+## driver was rejected: playing headlessly is exactly what caught the empty music
+## loops in this milestone.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_PREDELETE \
+			or what == NOTIFICATION_EXIT_TREE:
+		if _music != null and is_instance_valid(_music):
+			_music.stop()
+			_music.stream = null
+		for player: AudioStreamPlayer in _pool:
+			if is_instance_valid(player):
+				player.stop()
+				player.stream = null
+		# The index is the last reference to every stream; without dropping it
+		# the engine reports "resources still in use at exit".
+		_streams.clear()
+		_current_music = ""
+
+
 func stop_music() -> void:
 	_current_music = ""
 	_music.stop()

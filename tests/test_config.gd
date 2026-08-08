@@ -5,7 +5,13 @@ extends TestCase
 
 func test_config_loaded_the_whole_data_set() -> void:
 	is_true(Config.is_loaded, "Config finished booting")
-	eq(Config.parts.size(), 14, "all 14 v1 parts are loaded")
+	# Every part in the file, not a magic number — the catalogue grows, and a
+	# hardcoded count only ever proves that someone edited two places at once.
+	var on_disk: JsonLoader.Result = JsonLoader.load_object("res://data/parts_db.json")
+	is_true(on_disk.ok, "parts_db.json parses")
+	eq(Config.parts.size(), ((on_disk.value as Dictionary)["parts"] as Dictionary).size(),
+		"every part in parts_db.json is loaded")
+	is_true(Config.parts.size() >= 14, "at least the 14 v1 parts are present")
 	eq(Config.blueprints.size(), 2, "biped plus the quadruped stub")
 	eq(Config.enemies.size(), 3, "all 3 enemy types are loaded")
 	is_true(Config.effects.size() >= 10, "the effect catalogue is loaded")

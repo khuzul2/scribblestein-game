@@ -20,7 +20,7 @@ implement.
 - `assets/`, `scenes/`, `scripts/`, `tools/` — create per `docs/TECH_SPEC.md` §2.
 
 ## Workflow rules
-- Execute milestones **M0 → M7 strictly in order**. A milestone is DONE only when
+- Execute milestones **M0 → M13 strictly in order**. A milestone is DONE only when
   every acceptance criterion in `docs/MILESTONES.md` demonstrably passes. Write the
   checks as runnable headless scripts or tests wherever possible; manual-only ACs
   get a written verification note in the PR/commit description.

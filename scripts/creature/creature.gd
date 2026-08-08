@@ -47,6 +47,8 @@ var _crouched: bool = false
 ## Where the feet sit while standing, in creature-local space. The crouch squash
 ## pivots on this so the soles never leave the floor.
 var _standing_feet_y: float = 0.0
+## The body box while standing, kept across a crouch — see `standing_body_box()`.
+var _standing_body_box: Rect2 = Rect2()
 
 
 func _ready() -> void:
@@ -162,6 +164,14 @@ func visual_height() -> float:
 	return _visual_bounds.size.y
 
 
+## The box the body collider occupies while *standing*, in creature-local space,
+## remembered across a crouch. Locomotion probes it to answer "would standing up
+## right here put my head inside a ceiling?", which is what lets a roll carry on
+## through a crawl tunnel instead of wedging halfway (DECISIONS_NEEDED D6).
+func standing_body_box() -> Rect2:
+	return _standing_body_box
+
+
 # --- internals -----------------------------------------------------------------
 
 ## The body collider is derived from the union of the creature's hurtboxes, so a
@@ -180,6 +190,7 @@ func _fit_body_collider() -> void:
 	body_collider.position = union.get_center()
 	if not _crouched:
 		_standing_feet_y = union.end.y
+		_standing_body_box = union
 	_fit_climb_sensor(union)
 
 

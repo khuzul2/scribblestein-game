@@ -8,7 +8,7 @@ on:
 
 env:
   # Pin the exact minor, per TECH_SPEC §1 — never float on "4.x".
-  GODOT_VERSION: 4.4.1
+  GODOT_VERSION: 4.7.1
 
 jobs:
   build:

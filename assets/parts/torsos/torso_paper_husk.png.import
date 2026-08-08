@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ch4nagu2w455d"
-path="res://.godot/imported/legs_scribble_sprint.png-008666225e9ae00244e043c4adf028e1.ctex"
+uid="uid://c6jchr76wyawr"
+path="res://.godot/imported/torso_paper_husk.png-753545e47da2cfee24600f051dc08c18.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/parts/legs/legs_scribble_sprint.png"
-dest_files=["res://.godot/imported/legs_scribble_sprint.png-008666225e9ae00244e043c4adf028e1.ctex"]
+source_file="res://assets/parts/torsos/torso_paper_husk.png"
+dest_files=["res://.godot/imported/torso_paper_husk.png-753545e47da2cfee24600f051dc08c18.ctex"]
 
 [params]
 

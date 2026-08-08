@@ -62,6 +62,7 @@ func _initialize() -> void:
 
 	_check_part_textures((parts_result.value as Dictionary)["parts"] as Dictionary, pngs)
 	_check_project_settings()
+	_check_audio()
 
 	_report()
 
@@ -185,6 +186,45 @@ func _check_import_settings(path: String) -> void:
 		elif not _same_value(actual, required):
 			_errors.append("%s: import option '%s' is %s, must be %s (Mandate A1)"
 				% [import_path, key, actual, required])
+
+
+# --- 5. audio ------------------------------------------------------------------
+
+## Shortest a required sound may be. A header-only WAV loads without complaint
+## and fails silently at playback — which is how both music loops shipped empty
+## for three milestones. Anything under a twentieth of a second is a render that
+## went wrong, not a sound.
+const MIN_AUDIO_SECONDS: float = 0.05
+
+const AUDIO_DIRS: Array[String] = ["res://assets/audio/sfx", "res://assets/audio/music"]
+const AUDIO_EXTENSIONS: Array[String] = ["wav", "ogg", "mp3"]
+
+
+func _check_audio() -> void:
+	var required: Array = ((_spec["audio"] as Dictionary)["required"] as Array)
+	for entry: Variant in required:
+		var sound_id: String = str(entry)
+		var path: String = _find_audio(sound_id)
+		if path == "":
+			_errors.append("audio '%s' is required by asset_spec.json but no file exists"
+				% sound_id)
+			continue
+		var stream: AudioStream = load(path) as AudioStream
+		if stream == null:
+			_errors.append("%s: does not load as an AudioStream" % path)
+			continue
+		if stream.get_length() < MIN_AUDIO_SECONDS:
+			_errors.append("%s: %.3f s — an empty or truncated sound (minimum %.2f s)"
+				% [path, stream.get_length(), MIN_AUDIO_SECONDS])
+
+
+func _find_audio(sound_id: String) -> String:
+	for directory: String in AUDIO_DIRS:
+		for extension: String in AUDIO_EXTENSIONS:
+			var path: String = "%s/%s.%s" % [directory, sound_id, extension]
+			if ResourceLoader.exists(path):
+				return path
+	return ""
 
 
 func _check_project_settings() -> void:

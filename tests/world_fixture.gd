@@ -20,6 +20,17 @@ static func wall_at(parent: Node, face_x: float, centre_y: float,
 		Layers.bit(Layers.WORLD), "Wall")
 
 
+## A slab hanging over the floor, whose *underside* sits at `underside_y`. Pair
+## it with `floor_at` to make a crawl tunnel: anything taller than
+## `floor_y - underside_y` cannot stand up between the two.
+static func ceiling_at(parent: Node, underside_y: float, from_x: float,
+		to_x: float, thickness: float = 400.0) -> StaticBody2D:
+	return _slab(parent,
+		Vector2((from_x + to_x) * 0.5, underside_y - thickness * 0.5),
+		Vector2(to_x - from_x, thickness),
+		Layers.bit(Layers.WORLD), "Ceiling")
+
+
 ## A climbable region — an Area2D on the `climbable` layer, which is what
 ## `can_climb` looks for. Pair it with a wall to make a scalable surface.
 static func climbable_region(parent: Node, centre: Vector2, size: Vector2) -> Area2D:

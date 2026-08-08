@@ -4,13 +4,10 @@
     "NOT block the build in the meantime. A waiver downgrades one issue id from",
     "error to warning; the warning is printed on EVERY boot, so nothing is hidden.",
     "Every id here MUST have a matching entry in /DECISIONS_NEEDED.md.",
-    "Deleting an entry restores the hard failure."
+    "Deleting an entry restores the hard failure.",
+    "",
+    "Empty since M8: D1 was ruled on (speed_boost is legal in any slot), so the",
+    "waiver it needed is gone and the check is enforced again at full strength."
   ],
-  "waivers": [
-    {
-      "id": "part_effect_slot_kind:arms_noodle_hookers:speed_boost",
-      "reason": "DECISIONS_NEEDED.md D1 - speed_boost is a UI icon flag; the actual speed change comes from stats.speed_mod, which WeightClass applies from every slot. Awaiting a call on whether effects.speed_boost.slot_kinds should include 'utility'.",
-      "opened": "M0"
-    }
-  ]
+  "waivers": []
 }

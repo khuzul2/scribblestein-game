@@ -2,7 +2,9 @@
 
 ## 1. Engine & Project Pins
 
-- **Godot 4.4.x** (pin the exact minor in `project.godot`; do not float on "4.x").
+- **Godot 4.7.x** (pin the exact minor in `project.godot`; do not float on "4.x").
+  Raised from 4.4.x by explicit instruction; the whole suite passes unchanged on
+  4.7.1, so the pin moved rather than the code.
 - **Renderer:** Compatibility (GL) — trivial 2D load, keeps a future web export open.
 - **Design resolution:** 1920×1080, `canvas_items` stretch, aspect `keep`.
 - **Physics:** 60 Hz fixed tick. Creatures are `CharacterBody2D`.

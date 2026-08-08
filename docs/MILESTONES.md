@@ -6,7 +6,7 @@ One playable build containing: Misshapen Biped blueprint · all 14 v1 parts ·
 3 enemy types · The Lab (editor + Scratchpad + unlock desk + map table) ·
 Level 01 "The Margins" · full loop (build → test → level → fight → ink/blueprints →
 corpse run → unlock → rebuild) · line boil + monochrome + core SFX set · save/load.
-Quadruped blueprint is explicitly OUT of the slice (M8).
+Quadruped blueprint is explicitly OUT of the slice (it lands in M9).
 
 Each milestone below is agent-executable and ends with testable acceptance criteria
 (AC). Do not start milestone N+1 with failing AC in milestone N.
@@ -83,12 +83,77 @@ difficulty & economy tuning pass.
 impassable without a glide part (jump math check); a first-time playtester finishes
 in 5–10 min; clearing marks completion on the map and persists.
 
-## M8 (post-slice) — Crooked Quadruped
-Second Skeleton2D rig per the `blueprints.json` stub; blueprint unlock flow;
-`fits_blueprints` filtering in the Lab; 4+ quadruped-compatible parts; pounce
-movement profile.
+---
+
+# Phase two — post-slice
+
+Scope set by the project owner after the vertical slice shipped: move to Godot
+4.7, settle every open decision, build the full part catalogue for both body
+types, add an interactive level editor, and give each level its own soundtrack.
+The rulings behind these milestones are in `/DECISIONS_NEEDED.md`; the ones that
+shaped the work are noted inline.
+
+## M8 — Engine 4.7.1 + decision resolutions
+Pin **Godot 4.7.1** (`project.godot`, CI, TECH_SPEC §1, README); resolve D1, D2,
+D4, D5, D6 per the owner's rulings; empty `validation_waivers.json`; add
+`tests/test_decisions.gd` so no ruling can silently regress.
+**AC:** the whole suite, the asset validator and every acceptance check pass on
+4.7.1. Boot validation reports **zero** issues — no errors and no warnings. The
+Light weight class is reachable, every part has a hurtbox, every part fits a
+blueprint that has its slot, and a rolling creature crosses a 900 px crawl tunnel
+while a non-ducking one is stopped by it.
+
+## M9 — Crooked Quadruped, full parity
+Real second `Skeleton2D` rig (the `STUB` marker comes off `blueprints.json`);
+pounce movement profile; blueprint unlock flow; `fits_blueprints` filtering in
+the Lab; active blueprint persisted in the save.
 **AC:** switching blueprints in the Lab re-rigs correctly; biped-only parts are
-hidden/greyed for quadruped and vice versa; save round-trips the active blueprint.
+hidden for the quadruped and vice versa; the save round-trips the active
+blueprint; every quadruped required slot has at least one part that fills it.
+
+## M10 — The part catalogue
+`docs/PARTS_TREE.md`: the full list/tree of every part and every art file for
+both body types. ~60 parts across legible archetypes (heavy/brawler,
+light/agile, ranged, utility/traversal, glass-cannon), each carrying a distinct
+effect or attack rather than only a stat delta. Dedicated `legs_front` /
+`legs_rear` parts for the quadruped (D2). Validator-clean placeholder art for
+every one.
+**AC:** every slot of both blueprints offers at least four legal parts; every
+archetype is reachable; every weight class is reachable on both blueprints; the
+asset validator passes on the whole catalogue; boot validation stays at zero
+issues; a crawl tunnel is a real lock again — at least one `legs` part grants
+neither `dodge_roll` nor `crouch` (D6's recorded consequence).
+
+## M11 — Interactive level editor
+In-game editor scene in the sketchbook aesthetic, reached from the main menu.
+Free-form polygon terrain drawing; one-way platforms; climbable walls; ropes;
+spawn and exit door; enemy placement with per-instance facing and patrol range;
+pickups, ink caches and cracked floors; hazards; warning sketches. Pan/zoom,
+undo/redo, and a Playtest button that enters the level with the current build.
+Levels are one JSON file each under `res://data/levels/`, with editor saves in
+`user://levels/`; a runtime loader builds any level from that file, and a
+geometry analyser measures gaps, ceilings and clearances from the polygon soup
+so `JumpMath` gate proofs keep working without hand-coded rectangles.
+**AC:** a level drawn in the editor saves, reloads and plays identically; the
+loader reproduces the geometry within a pixel; the analyser's measured gap for a
+known level matches the drawn one; undo/redo round-trips every tool; an editor
+level with an unreachable exit is reported before it can be played.
+
+## M12 — Soundtrack system
+Up to five tracks per level. A file picker copies `.ogg` / `.mp3` / `.wav` into
+`user://music/<level_id>/`; the level JSON references them by name. Ordered
+playlist with crossfade at track end, plus a per-level shuffle toggle. Editor UI
+for adding, reordering and removing tracks.
+**AC:** five tracks attach to a level, survive a save/reload, and play in the
+authored order; shuffle changes the order without repeating a track inside a
+cycle; a missing or unreadable file degrades to silence with a named warning
+rather than crashing; a sixth track is refused with a clear message.
+
+## M13 — Integration and final verification
+Level 01 ported to the editor's format; full acceptance run on 4.7.1; docs
+updated.
+**AC:** every earlier milestone's AC still passes; Level 01 plays identically
+from data; the autopilot clears it.
 
 ## Backlog (explicitly not scheduled)
 Asymmetric arm slots · mid-level rebuild stations · checkpoints inside levels ·

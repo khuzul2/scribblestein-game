@@ -23,6 +23,7 @@ const MUSIC_DIR: String = "res://assets/audio/music"
 
 var _written: int = 0
 var _skipped: int = 0
+var _failed: int = 0
 
 
 func _initialize() -> void:
@@ -73,8 +74,9 @@ func _initialize() -> void:
 	_save("mus_lab_loop", _loop(70.0, 8, false), MUSIC_DIR)
 	_save("mus_level01_loop", _loop(124.0, 8, true), MUSIC_DIR)
 
-	print("Placeholder audio: %d written, %d already up to date." % [_written, _skipped])
-	quit(0)
+	print("Placeholder audio: %d written, %d already up to date, %d failed."
+		% [_written, _skipped, _failed])
+	quit(1 if _failed > 0 else 0)
 
 
 # --- voices --------------------------------------------------------------------
@@ -188,7 +190,11 @@ func _loop(bpm: float, bars: int, heavy: bool) -> PackedFloat32Array:
 	var beat: float = 60.0 / bpm
 	var seconds: float = beat * 4.0 * float(bars)
 	var samples: PackedFloat32Array = _silence(seconds)
-	var bass_notes: Array[float] = [55.0, 55.0, 73.42, 61.74] if heavy else [49.0, 55.0, 41.2, 49.0]
+	# Packed, not `Array[float]`: a ternary between two array literals is typed
+	# plain `Array`, which cannot be assigned to a typed array — and the resulting
+	# error left both music loops as empty 44-byte headers for three milestones.
+	var bass_notes: PackedFloat32Array = PackedFloat32Array([55.0, 55.0, 73.42, 61.74]) \
+		if heavy else PackedFloat32Array([49.0, 55.0, 41.2, 49.0])
 
 	for step: int in range(bars * 16):
 		var start: float = float(step) * beat * 0.25
@@ -261,7 +267,19 @@ func _place(target: PackedFloat32Array, at_seconds: float,
 		target[position] = clampf(target[position] + voice[index] * level, -1.0, 1.0)
 
 
+## Shortest sound worth writing. Anything below this is a voice that failed to
+## render, not a sound — writing it produces a header-only WAV that loads as an
+## empty stream and fails at playback rather than at generation.
+const MIN_SAMPLES: int = 256
+
+
 func _save(sound_id: String, samples: PackedFloat32Array, directory: String = SFX_DIR) -> void:
+	if samples.size() < MIN_SAMPLES:
+		printerr("%s rendered %d samples — refusing to write an empty WAV."
+			% [sound_id, samples.size()])
+		_failed += 1
+		return
+
 	var stream: AudioStreamWAV = AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = SAMPLE_RATE

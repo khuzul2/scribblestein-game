@@ -6,7 +6,7 @@ Agent reading order:
    questions. Do not reopen decided items.
 3. `TECH_SPEC.md` — engine pins, creature architecture, physics layers, InputMap,
    camera formula, save schema, JSON loading rules.
-4. `MILESTONES.md` — build order M0→M7 (+M8 post-slice), each with acceptance
+4. `MILESTONES.md` — build order M0→M7 (the slice) then M8→M13 (phase two), each with acceptance
    criteria.
 5. `ASSET_SPEC.md` — before touching any texture or sound.
 

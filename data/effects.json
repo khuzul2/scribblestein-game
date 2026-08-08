@@ -2,61 +2,87 @@
   "effects": {
     "bite_attack": {
       "category": "attack",
-      "slot_kinds": ["attack"],
+      "slot_kinds": [
+        "attack"
+      ],
       "description": "Melee chomp. Uses the part's damage hitboxes during the active phase; hitboxes lunge with a 12deg head-bone dip.",
       "requires_attack_def": true
     },
     "sting_attack": {
       "category": "attack",
-      "slot_kinds": ["attack"],
+      "slot_kinds": [
+        "attack"
+      ],
       "description": "Fast forward poke from the tail bone; longest reach in v1, good for switches behind grates.",
       "requires_attack_def": true
     },
     "club_attack": {
       "category": "attack",
-      "slot_kinds": ["attack"],
+      "slot_kinds": [
+        "attack"
+      ],
       "description": "Slow heavy swing, big knockback. Tail bone sweeps 90deg during active phase.",
       "requires_attack_def": true
     },
     "can_glide": {
       "category": "mobility",
-      "slot_kinds": ["utility"],
+      "slot_kinds": [
+        "utility"
+      ],
       "description": "While airborne, falling, and jump_glide HELD: vertical speed clamped to glide_fall_cap; air control multiplied by glide_air_control. Releasing resumes normal gravity.",
       "params_from": "game_config.movement.glide"
     },
     "double_jump": {
       "category": "mobility",
-      "slot_kinds": ["utility"],
+      "slot_kinds": [
+        "utility"
+      ],
       "description": "One extra jump per airtime on jump_glide TAP while airborne; resets on landing or wall grab. If the creature also has can_glide, tap = double jump, hold = glide.",
       "params_from": "game_config.movement.double_jump"
     },
     "can_climb": {
       "category": "mobility",
-      "slot_kinds": ["utility"],
+      "slot_kinds": [
+        "utility"
+      ],
       "description": "While overlapping a 'climbable' layer wall and holding climb_up: ascend at climb_speed; gravity off; drains nothing (v1). Jump from wall gives a small away-impulse.",
       "params_from": "game_config.movement.climb"
     },
     "dodge_roll": {
       "category": "mobility",
-      "slot_kinds": ["movement"],
+      "slot_kinds": [
+        "movement"
+      ],
       "description": "crouch_roll on ground: fixed-distance roll with i-frames. Fits under crawl tunnels only while rolling.",
       "params_from": "game_config.movement.roll"
     },
     "crouch": {
       "category": "mobility",
-      "slot_kinds": ["movement"],
+      "slot_kinds": [
+        "movement"
+      ],
       "description": "crouch_roll HELD on ground: half-height hurtbox, move at crouch_speed, fits crawl tunnels continuously.",
       "params_from": "game_config.movement.crouch"
     },
     "jump_boost": {
       "category": "passive",
-      "slot_kinds": ["movement"],
-      "description": "Multiplies the weight-class jump_velocity by the part's stats.jump_mod (declared on the part; this effect just flags the mechanic for UI icons)."
+      "slot_kinds": [
+        "movement",
+        "core",
+        "attack",
+        "utility"
+      ],
+      "description": "Multiplies the weight-class jump_velocity by the part's stats.jump_mod (declared on the part; this effect just flags the mechanic for UI icons). Legal in any slot: it is a UI flag for a stat multiplier, not a slot mechanic (D1)."
     },
     "speed_boost": {
       "category": "passive",
-      "slot_kinds": ["movement"],
-      "description": "Multiplies weight-class max_speed by the part's stats.speed_mod. UI icon flag; math applied by WeightClass."
+      "slot_kinds": [
+        "movement",
+        "core",
+        "attack",
+        "utility"
+      ],
+      "description": "Multiplies weight-class max_speed by the part's stats.speed_mod. UI icon flag; math applied by WeightClass. Legal in any slot: it is a UI flag for a stat multiplier, not a slot mechanic (D1)."
     }
   },
   "notes": [

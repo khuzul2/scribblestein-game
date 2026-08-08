@@ -2,75 +2,54 @@
 
 Contradictions between spec sources that the agent must not resolve silently
 (`CLAUDE.md` → *Spec conflicts*). Each entry states the conflict, the sources,
-the options, and what the build is doing **in the meantime** so nothing is
-hidden. Entries with a waiver id are listed in `data/validation_waivers.json`
-and re-printed by the boot validator on **every** run.
+the options, and the ruling.
 
 Precedence when resolving: MANDATES > `data/*.json` > TECH_SPEC > DESIGN > MILESTONES.
+
+**Status: all six entries were ruled on by a human before M8 and are resolved.
+`data/validation_waivers.json` is empty and boot validation raises zero issues.**
+`tests/test_decisions.gd` pins every ruling so none of them can quietly come back.
 
 ---
 
 ## D1 — `arms_noodle_hookers` carries `speed_boost`, an effect declared movement-only
 
-- **Waiver id:** `part_effect_slot_kind:arms_noodle_hookers:speed_boost`
-- **Status:** WAIVED — non-blocking, awaiting a human decision.
+- **Status:** RESOLVED in M8 — option 1.
 
 **Conflict.** `data/parts_db.json → parts.arms_noodle_hookers` sits in slot `arms`,
 which `data/blueprints.json → blueprints.biped.slots.arms` declares as
-`kind: "utility"`. Its `effects` list contains `speed_boost`, and
-`data/effects.json → effects.speed_boost.slot_kinds` is `["movement"]`.
-`effects.json → notes` says *"slot_kinds documents where the effect is legal; the
-boot validator enforces it"*, so a strict reading makes the part illegal.
+`kind: "utility"`. Its `effects` list contained `speed_boost`, and
+`data/effects.json → effects.speed_boost.slot_kinds` was `["movement"]`, so a
+strict reading made a working part illegal.
 
-**Why it is not obviously a data bug.** `speed_boost` is documented as a *UI icon
-flag* — "math applied by WeightClass". The part's actual speed change comes from
-`stats.speed_mod: 1.05`, which `WeightClass` multiplies across **all** equipped
-parts regardless of slot kind. So the part functions correctly either way; only
-the legality declaration disagrees.
-
-**Options.**
-1. Add `"utility"` to `speed_boost.slot_kinds` (and, for symmetry, `jump_boost`).
-   Any slot may flag a passive stat modifier. *Agent's recommendation.*
-2. Drop `speed_boost` from `arms_noodle_hookers.effects` and keep `speed_mod`.
-   The part still speeds you up but shows no icon in the Lab readout.
-3. Move the part to a movement slot — rejected: it is an arms part, DESIGN §4.2
-   lists arms as utility.
-
-**Current behaviour.** Waived to a warning. The part is equippable, its
-`speed_mod` applies, and the Lab shows its speed icon.
+**Ruling.** `speed_boost` and `jump_boost` are now legal in every slot kind
+(`core`, `movement`, `attack`, `utility`). They are UI icon flags for a `stats`
+multiplier that `WeightClass` applies from any slot, so the slot restriction was
+describing a mechanic that never existed. The waiver that downgraded this to a
+warning has been deleted and the check is enforced at full strength again.
 
 ---
 
-## D2 — `legs_tree_trunks` declares `fits_blueprints: ["biped", "quadruped"]` but quadruped has no `legs` slot
+## D2 — `legs_tree_trunks` declared `fits_blueprints: ["biped", "quadruped"]` but quadruped has no `legs` slot
 
-- **Waiver id:** none needed — auto-downgraded (see below).
-- **Status:** OPEN — out of scope for the vertical slice.
+- **Status:** RESOLVED in M8 — option 1.
 
-**Conflict.** `data/blueprints.json → blueprints.quadruped.slots` are
-`torso, legs_front, legs_rear, head, tail, back`. There is no `legs` slot, so
-`legs_tree_trunks` (slot `legs`) can never be equipped on a quadruped despite
-declaring that it fits one. `parts_db.schema.json` permits `legs_front` and
-`legs_rear` as slot values, so the vocabulary exists; no part uses them yet.
+**Conflict.** The quadruped's slots are `torso, legs_front, legs_rear, head, tail,
+back`. There is no `legs` slot, so a `legs` part could never be equipped there
+despite declaring it fit.
 
-**Options.**
-1. Remove `"quadruped"` from `legs_tree_trunks.fits_blueprints`, and author the
-   quadruped's leg parts in M8 with slots `legs_front` / `legs_rear`.
-   *Agent's recommendation* — matches MILESTONES M8 ("4+ quadruped-compatible parts").
-2. Let a `legs` part fill both quadruped leg slots, which needs a rule in
-   `blueprints.json` (e.g. `"accepts_slot": "legs"` on each) rather than code.
-
-**Current behaviour.** The validator automatically downgrades cross-reference
-failures against a blueprint marked `"status": "STUB…"` to warnings, because the
-rig it refers to does not exist yet. The warning prints on every boot. It becomes
-a hard error the moment the quadruped stub is implemented in M8.
+**Ruling.** `legs_tree_trunks` is biped-only. The quadruped gets **dedicated
+`legs_front` / `legs_rear` parts** in the M10 catalogue, so front and rear legs
+can differ — a four-legged creature with sprinter forelegs and heavy haunches is
+a build, not a rounding error. `tests/test_decisions.gd` now asserts that no part
+anywhere claims a blueprint that has no slot for it, so the class of bug is
+closed rather than the instance.
 
 ---
 
 ## D3 — "import filter Nearest, mipmaps off" is not a texture import option in Godot 4
 
-- **Waiver id:** none — resolved by the agent as an engine-mechanics mapping,
-  logged here for visibility rather than as an open question.
-- **Status:** RESOLVED (no design change).
+- **Status:** RESOLVED — an engine-mechanics mapping, logged for visibility.
 
 `ASSET_SPEC.md §5.4` and `MANDATES.md A1` require textures to import with
 `filter = Nearest, mipmaps = off`. In Godot 3 both were import options; in
@@ -88,120 +67,71 @@ override. The intent is fully achievable, so this is a mapping, not a conflict:
 
 ---
 
-## D4 — the Light weight class is unreachable with the shipped part catalogue
+## D4 — the Light weight class was unreachable with the shipped part catalogue
 
-- **Waiver id:** none — reported as a boot warning
-  (`weight_class_unreachable:biped:light`), which disappears the moment the data
-  makes Light reachable.
-- **Status:** OPEN — playable, but one third of DESIGN §5 is currently dead content.
+- **Status:** RESOLVED in M8 — option 2.
 
-**Conflict.** `DESIGN.md §5` and `game_config.json → movement.weight_classes.light`
-define Light as `0–25` total weight: *"Fast, floaty, high jump, weak knockback
-resistance"*. But `torso` and `legs` are both required slots, and the lightest
-legal pair in `parts_db.json` is `torso_ribby` (20) + `legs_scribble_sprint` (8)
-**= 28**. No legal biped can weigh 25 or less, so no player will ever be Light,
-and `light`'s whole preset — `max_speed 340`, `jump_velocity -880`,
-`knockback_taken_mult 1.3` — is unreachable.
+**Conflict.** Light is `0–25` total weight, but `torso` and `legs` are both
+required and the lightest legal pair was `torso_ribby` (20) +
+`legs_scribble_sprint` (8) **= 28**. No player could ever be Light, so the whole
+preset — `max_speed 340`, `jump_velocity -880`, `knockback_taken_mult 1.3` — was
+dead content.
 
-**Options.**
-1. Raise `light.max_total_weight` from 25 to ~30. One number, no part churn; the
-   starter build immediately becomes Light, which changes the game's opening feel
-   from "baseline" to "fast and floaty".
-2. Add a light torso (weight ≤ 17) to the catalogue. *Agent's recommendation* —
-   it keeps the starter build Medium as DESIGN §5 implies ("Medium: baseline
-   platforming feel") and makes Light something you *build towards*, which is the
-   point of the part economy. Costs one new part + art.
-3. Cut `torso_ribby` from 20 to 17. Cheapest, but it re-tunes the default build
-   rather than adding a choice.
-
-**Current behaviour.** Nothing is blocked — the class boundaries, presets and
-movement code all work; `tests/test_movement.gd` proves the Light preset drives
-the jump apex correctly by forcing the class. The boot warning names the lightest
-legal build and the ceiling it misses, so the fix is a one-line data edit
-whenever a human picks an option.
+**Ruling.** A new light torso, **`torso_paper_husk`** (weight 15, 70 HP,
+`jump_mod 1.05`, 60 ink), makes the lightest legal biped **23**. The starter build
+stays Medium, so the opening feel is unchanged and Light is something you *build
+towards* — which is the point of the part economy. `tests/test_decisions.gd`
+asserts every weight class is reachable by some legal loadout, so adding a class
+without a build that reaches it now fails the suite.
 
 ---
 
----
+## D5 — the starter bite could not reach a grounded Stinger
 
-## D5 — the starter bite cannot reach a grounded Stinger
+- **Status:** RESOLVED in M8 — option 1.
 
-- **Waiver id:** none — reported as a boot warning
-  (`attack_reach:head_monster_maw:enemy_stinger`), which disappears by itself
-  once the data lets the two touch.
-- **Status:** OPEN — the slice is playable (see *Current behaviour*), but one
-  enemy is immune to the starter attack while it stands on the ground.
+**Conflict.** The Jagged Monster Maw's damage circle spans y **−455 … −365**.
+`enemy_stinger` has no head, so its highest hurtbox — the torso — topped out at
+**−360**. The two missed by 5 px, and the starter kit's only attack could not
+damage a grounded Stinger at all.
 
-**Conflict.** Hitbox offsets are bone-local and the biped bone tree is fixed, so
-whether an attack can ever touch a target is decided entirely by the data. The
-Jagged Monster Maw's damage circle sits at the `head` bone, `offset [60, -10]`,
-`radius 45` — a vertical span of **y −455 … −365**. `enemy_stinger` has no head
-(deliberately: *"its primary attack is simply absent"*), so its hurtboxes are
-torso −360 … −180, legs −150 … +6 and tail −197 … −153.
-
-The nearest pair, the bite's bottom edge and the torso's top edge, **miss by
-5 px**. The starter kit's only attack therefore cannot damage a grounded Stinger
-at all, and the Stinger is one of the three enemies the vertical slice ships.
-
-**Options.**
-1. Give `back_bat_scraps` a hurtbox. It is currently the only equipped part in
-   the game with `"hitboxes": []`, so the wings cannot be hit at all; a box at
-   the `back` bone (y −330) with a half-height of ~45 would span −375 … −285 and
-   close the gap. *Agent's recommendation* — it fixes a second latent gap at the
-   same time and reads correctly: you bite the wings.
-2. Lower or enlarge the maw's damage box (e.g. `offset [60, 10]`). One number,
-   but it changes the reach of the starter attack against everything.
-3. Accept it as designed: the Stinger is a tail-only target, teaching "kill what
-   you want to become" by forcing the player towards the Scorpion Tail. If this
-   is the intent it should be said out loud in DESIGN §9, because nothing
-   currently signals it and a player will read it as a bug.
-
-**Current behaviour.** Nothing is blocked and the slice is completable. The
-Stinger's `glide_harasser` profile has it hop off ledges and glide at the player,
-and while it is **airborne above** the player its legs and torso rise into the
-bite's band, so it can be hit out of the air. On the ground it cannot be bitten.
-The tail (`sting_attack`, damage box at torso height) hits it in either case.
-
-The reach check that found this now runs at boot for every starter attack
-against every enemy, so this class of silent immunity cannot reappear unnoticed.
+**Ruling.** `back_bat_scraps` gained a hurtbox at the `back` bone
+(`extents [50, 45]`, spanning −375 … −285), which closes the gap and reads
+correctly: you bite the wings. Auditing for the same shape found
+`back_sketch_thrusters` had **no hurtbox either** — both wing parts were
+untouchable by anything in the game. It now has one too
+(`extents [42, 38]`). `tests/test_decisions.gd` asserts that *every* part in the
+catalogue has at least one hurtbox, and the boot validator's reach check keeps
+proving that every starter attack can touch every enemy.
 
 ---
 
-## D6 — a dodge roll cannot fit through any crawl tunnel
+## D6 — a dodge roll could not fit through any crawl tunnel
 
-- **Waiver id:** none — this is a level-design consequence, not a validation
-  failure, so it is recorded here rather than enforced by a check.
-- **Status:** OPEN — worked around in Level 01; the alternative key does not work.
+- **Status:** RESOLVED in M8 — option 1. **Read the consequence below.**
 
-**Conflict.** `DESIGN.md §9` lists the canonical key for a low crawl tunnel as
-*"`crouch` legs (or Light class + roll)"*, and `effects.json → dodge_roll` says a
-roll *"fits under crawl tunnels only while rolling"*. Neither is achievable with
-the shipped numbers:
+**Conflict.** `DESIGN.md §9` lists the key for a low crawl tunnel as *"`crouch`
+legs (or Light class + roll)"* and `effects.json → dodge_roll` promises a roll
+*"fits under crawl tunnels only while rolling"*. Neither worked: a roll covers
+190 px over 0.32 s with a 0.5 s cooldown, and a creature is 110–150 px wide, so
+one roll clears at most ~80 px of overhang before the creature stands up inside
+the ceiling with the cooldown ticking.
 
-- **Light class is unreachable** at all (see D4), so "Light class + roll" cannot
-  happen to anyone.
-- **A roll is too short to traverse a tunnel.** `game_config.json → movement.roll`
-  gives `distance 190` over `duration 0.32`, with a `cooldown` of 0.5 s. A
-  creature is 110–150 px wide, so clearing an overhang of length *L* needs
-  `L + width` of travel while ducked — at most **80 px** of overhang for the
-  narrowest build. Anything longer leaves the creature standing up underneath
-  the ceiling mid-tunnel, where it is stuck. Rolls cannot be chained through
-  either: the 0.5 s cooldown is spent standing.
+**Ruling.** Under an overhang the roll cooldown is suspended and *holding* crouch
+keeps the roll going, so a roll traverses a tunnel of any length. A creature that
+is already ducked also stays ducked while a ceiling is overhead, so a roll that
+expires mid-tunnel crouch-walks out instead of wedging. `Locomotion` decides this
+with a shape query of the creature's own **standing** body box at its current
+position (`Creature.standing_body_box()`), inset 4 px so the floor underfoot and
+a brushed wall never read as an overhang.
 
-So in practice a crawl tunnel is a **`crouch`-only gate**, and `crouch` comes
-from exactly one part, `legs_tree_trunks` (100 ink).
+The gate is still a gate: a creature that can neither roll nor crouch walks into
+the overhang and stops, which `tests/test_decisions.gd` proves.
 
-**Options.**
-1. Let a roll be held or chained — remove the standing beat between rolls while
-   a ceiling is overhead. *Agent's recommendation*: it is the smallest change
-   that makes the documented key real, and rolling through a gap feels good.
-2. Raise `roll.distance` to ~400 and drop the cooldown, so one roll clears a real
-   tunnel. Changes dodge combat as a side effect.
-3. Accept crouch as the only key and delete "(or Light class + roll)" from
-   DESIGN §9 and the promise from `effects.json → dodge_roll`.
-
-**Current behaviour.** Level 01 puts its crawl tunnel on an optional branch — on
-the chasm floor, to the *left* of where the player lands, so the way onward is
-never behind it. It is signposted "duck (ink back there)" and rewards a
-`crouch` build with an ink cache. The level stays completable with the starter
-kit, which has no crouch.
+**Consequence, recorded rather than hidden.** With the v1 catalogue, *all three*
+`legs` parts grant `dodge_roll` or `crouch`, so now that rolling actually works a
+crawl tunnel gates nothing — every legal build passes it. That is a property of
+having only three legs parts, not of the ruling. The M10 catalogue adds legs with
+neither effect, at which point the tunnel is a real lock again. Level 01's crawl
+tunnel is on an optional branch, so nothing about the slice's progression depends
+on it either way.

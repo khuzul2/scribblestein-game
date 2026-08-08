@@ -24,6 +24,9 @@ enum State { GROUND, AIR, GLIDE, CLIMB, ROLL, CROUCH }
 const STEP_SPACING_PX: float = 110.0
 const GLIDE_FLAP_SECONDS: float = 0.45
 const CLIMB_SCRATCH_SECONDS: float = 0.32
+## How far the standing-height ceiling probe is pulled in on each side, so the
+## floor underfoot and a wall being brushed never read as an overhang.
+const CEILING_PROBE_INSET_PX: float = 4.0
 
 var creature: Creature = null
 var intent: MovementIntent = MovementIntent.new()
@@ -237,9 +240,17 @@ func _update_roll(on_floor: bool, _delta: float) -> bool:
 		creature.velocity.x = float(creature.facing) * _roll_speed()
 		return true
 
+	# One roll covers `roll.distance` (190 px) and a creature is 110-150 px wide,
+	# so a crawl tunnel longer than ~80 px would leave the creature standing up
+	# inside its ceiling halfway through, with a 0.5 s cooldown spent stuck.
+	# Under an overhang the cooldown is suspended and *holding* crouch keeps the
+	# roll going, which is what `effects.json -> dodge_roll` promises and what
+	# DESIGN §9 means by "Light class + roll" (DECISIONS_NEEDED D6).
+	var ducked: bool = _ceiling_overhead()
 	var can_roll: bool = creature.has_effect("dodge_roll") and on_floor \
-		and _roll_cooldown_remaining <= 0.0 and stun_remaining <= 0.0
-	if intent.crouch_pressed and can_roll:
+		and stun_remaining <= 0.0 \
+		and (ducked or _roll_cooldown_remaining <= 0.0)
+	if (intent.crouch_pressed or (ducked and intent.crouch_held)) and can_roll:
 		_roll_remaining = Config.cfg_float("movement.roll.duration")
 		_roll_cooldown_remaining = Config.cfg_float("movement.roll.cooldown") \
 			+ Config.cfg_float("movement.roll.duration")
@@ -258,12 +269,45 @@ func _roll_speed() -> float:
 func _update_crouch(on_floor: bool, rolling: bool, climbing: bool) -> void:
 	# A roll ducks too: effects.json promises a roll "fits under crawl tunnels
 	# only while rolling", which is only true if it actually shrinks the creature.
+	#
+	# Staying ducked while a ceiling is overhead is what stops a creature that
+	# rolled into a tunnel from standing straight into the rock the moment the
+	# roll expires. It is not a way *in* — a creature with neither `crouch` nor
+	# `dodge_roll` can never get under the overhang in the first place, so the
+	# gate still holds.
 	var should_crouch: bool = rolling \
+		or (_crouched and _ceiling_overhead()) \
 		or (creature.has_effect("crouch") and on_floor and intent.crouch_held and not climbing)
 	if should_crouch == _crouched:
 		return
 	_crouched = should_crouch
 	creature.set_crouched(_crouched)
+
+
+## True when standing up at the current position would put the creature's body
+## inside solid world — i.e. it is under a crawl tunnel's ceiling.
+##
+## The probe is the *standing* body box, shrunk by `CEILING_PROBE_INSET_PX` on
+## every side so the floor it is resting on and the walls it is brushing do not
+## read as a ceiling.
+func _ceiling_overhead() -> bool:
+	var box: Rect2 = creature.standing_body_box()
+	var inset: Vector2 = Vector2.ONE * (CEILING_PROBE_INSET_PX * 2.0)
+	if box.size.x <= inset.x or box.size.y <= inset.y:
+		return false
+	var world: World2D = creature.get_world_2d()
+	if world == null:
+		return false
+
+	var shape: RectangleShape2D = RectangleShape2D.new()
+	shape.size = box.size - inset
+	var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	query.shape = shape
+	query.transform = Transform2D(0.0, creature.global_position + box.get_center())
+	query.collision_mask = Layers.mask([Layers.WORLD, Layers.WORLD_CRACKED])
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	return not world.direct_space_state.intersect_shape(query, 1).is_empty()
 
 
 func is_crouched() -> bool:
