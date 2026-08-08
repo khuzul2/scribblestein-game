@@ -20,6 +20,11 @@ signal broke_cracked_floor(floor_node: Node)
 
 enum State { GROUND, AIR, GLIDE, CLIMB, ROLL, CROUCH }
 
+## Pixels between footsteps, and how often the wings and claws are heard.
+const STEP_SPACING_PX: float = 110.0
+const GLIDE_FLAP_SECONDS: float = 0.45
+const CLIMB_SCRATCH_SECONDS: float = 0.32
+
 var creature: Creature = null
 var intent: MovementIntent = MovementIntent.new()
 var state: State = State.AIR
@@ -36,6 +41,10 @@ var _was_on_floor: bool = true
 var _fall_speed: float = 0.0
 var _crouched: bool = false
 var _climb_sensor: Area2D = null
+## Distance walked since the last footstep, in pixels.
+var _step_distance: float = 0.0
+var _step_index: int = 0
+var _glide_cooldown: float = 0.0
 
 
 func _ready() -> void:
@@ -83,8 +92,32 @@ func _physics_process(delta: float) -> void:
 	_detect_landing(before_move)
 	_set_state(on_floor, climbing, rolling)
 
+	_tick_footsteps(delta)
+
 	intent.jump_pressed = false
 	intent.crouch_pressed = false
+
+
+## Footsteps are spaced by distance travelled, not by a timer, so they stay in
+## step whether the creature is a Light sprinter or a Heavy plodder.
+func _tick_footsteps(delta: float) -> void:
+	_glide_cooldown = maxf(0.0, _glide_cooldown - delta)
+
+	if state == State.GROUND and absf(creature.velocity.x) > 20.0:
+		_step_distance += absf(creature.velocity.x) * delta
+		if _step_distance >= STEP_SPACING_PX:
+			_step_distance = 0.0
+			_step_index = _step_index % 4 + 1
+			Audio.sfx("sfx_step_scribble_0%d" % _step_index, 0.12)
+	else:
+		_step_distance = STEP_SPACING_PX * 0.6  # the next step lands promptly
+
+	if state == State.GLIDE and _glide_cooldown <= 0.0:
+		_glide_cooldown = GLIDE_FLAP_SECONDS
+		Audio.sfx("sfx_glide_flapflap", 0.1)
+	elif state == State.CLIMB and _glide_cooldown <= 0.0:
+		_glide_cooldown = CLIMB_SCRATCH_SECONDS
+		Audio.sfx("sfx_climb_scratch_loop", 0.15)
 
 
 # --- timers --------------------------------------------------------------------
@@ -211,6 +244,7 @@ func _update_roll(on_floor: bool, _delta: float) -> bool:
 		_roll_cooldown_remaining = Config.cfg_float("movement.roll.cooldown") \
 			+ Config.cfg_float("movement.roll.duration")
 		creature.health.grant_iframes(Config.cfg_float("movement.roll.iframes"))
+		Audio.sfx("sfx_roll_swish", 0.1)
 		creature.velocity.x = float(creature.facing) * _roll_speed()
 		return true
 	return false

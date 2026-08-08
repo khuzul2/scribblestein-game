@@ -242,6 +242,7 @@ func _add_slab(rect: Rect2, layer: int, tile: String, slab_name: String) -> Stat
 	skin.region_rect = Rect2(Vector2.ZERO, rect.size)
 	skin.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	skin.z_index = -10
+	LineBoil.apply(skin)
 	body.add_child(skin)
 
 	add_child(body)

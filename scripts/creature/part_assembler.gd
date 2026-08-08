@@ -189,6 +189,7 @@ static func _mount(creature: Creature, bones: Dictionary, slot: String,
 		if MIRRORED_SLOTS.has(slot) or is_far_half:
 			sprite.scale.x = -1.0
 		sprite.z_index = _slot_z(slot, slot_spec, index, bone_ids.size())
+		LineBoil.apply(sprite)
 		bone.add_child(sprite)
 
 		for entry: Variant in part.get("hitboxes", []) as Array:

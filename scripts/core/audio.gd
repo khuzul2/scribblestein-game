@@ -123,8 +123,17 @@ func _index_directory(path: String) -> void:
 			var full: String = path.path_join(entry)
 			var stream: AudioStream = load(full) as AudioStream
 			if stream != null:
-				if stream is AudioStreamOggVorbis:
-					(stream as AudioStreamOggVorbis).loop = path == MUSIC_DIR
+				# Looping is a property of the stream, and `save_to_wav` does not
+				# write a `smpl` chunk, so set it here rather than relying on the
+				# importer to have guessed.
+				if path == MUSIC_DIR:
+					if stream is AudioStreamOggVorbis:
+						(stream as AudioStreamOggVorbis).loop = true
+					elif stream is AudioStreamWAV:
+						var wav: AudioStreamWAV = stream as AudioStreamWAV
+						wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+						wav.loop_begin = 0
+						wav.loop_end = wav.data.size() / 2
 				_streams[entry.get_basename()] = stream
 		entry = dir.get_next()
 	dir.list_dir_end()

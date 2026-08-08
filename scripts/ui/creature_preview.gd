@@ -17,13 +17,21 @@ var _viewport: SubViewport = null
 
 
 func _ready() -> void:
-	stretch = true
+	# No stretching, and nearest sampling on the way out: rescaling a viewport
+	# blends its pixels, and a blend between ink and paper is a grey — which
+	# Mandate A1 forbids anywhere on screen.
+	stretch = false
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	custom_minimum_size = Vector2(PREVIEW_SIZE)
+	size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	_viewport = SubViewport.new()
 	_viewport.size = PREVIEW_SIZE
 	_viewport.transparent_bg = true
+	_viewport.canvas_item_default_texture_filter = \
+		Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	# The preview must never step the world; it is a mannequin, not a creature.
 	_viewport.physics_object_picking = false
@@ -55,7 +63,10 @@ func fit() -> void:
 	var height: float = creature.visual_height()
 	if height <= 0.0:
 		return
-	var scale_factor: float = clampf(float(PREVIEW_SIZE.y - 80) / height, 0.2, 1.4)
+	# Quantised so the mannequin is only ever drawn at a clean fraction; an
+	# arbitrary scale would land ink on half-pixels.
+	var scale_factor: float = snappedf(
+		clampf(float(PREVIEW_SIZE.y - 80) / height, 0.25, 1.0), 0.25)
 	creature.scale = Vector2(scale_factor, scale_factor)
 
 

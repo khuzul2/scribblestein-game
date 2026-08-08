@@ -73,6 +73,7 @@ func _generate_part(part_id: String, part: Dictionary) -> void:
 		_hatch(image, polygon, rng)
 		ink = _bounds(polygon) if ink.size == Vector2.ZERO else ink.merge(_bounds(polygon))
 
+	_detail(image, part_id, slot, ink, pivot, rng)
 	_draw_pivot_tick(image, pivot)
 	# Inside the silhouette, never below it: a label floating in the canvas
 	# margin would inflate the ink bounds the camera measures.
@@ -127,6 +128,86 @@ func _silhouette(part: Dictionary, slot: String, canvas: Vector2, pivot: Vector2
 		_:
 			shapes.append(_blob(centre, extents, 10, rng))
 	return shapes
+
+
+## A motif per part, so a Ribby Torso reads as ribs and a Monster Maw as teeth
+## rather than as two identical blobs with different captions. Still placeholder
+## work — the hand-drawn pass is a human's — but legible placeholder work.
+func _detail(image: Image, part_id: String, slot: String, ink: Rect2,
+		pivot: Vector2, rng: RandomNumberGenerator) -> void:
+	match part_id:
+		"torso_ribby":
+			for i: int in range(5):
+				var y: float = ink.position.y + ink.size.y * (0.28 + 0.11 * float(i))
+				_wobbly_line(image, Vector2(ink.position.x + ink.size.x * 0.22, y),
+					Vector2(ink.end.x - ink.size.x * 0.22, y + rng.randf_range(-5.0, 5.0)), 3, rng)
+		"torso_barrel":
+			for i: int in range(3):
+				var y: float = ink.position.y + ink.size.y * (0.3 + 0.2 * float(i))
+				_wobbly_line(image, Vector2(ink.position.x + 8.0, y),
+					Vector2(ink.end.x - 8.0, y), 5, rng)
+		"head_monster_maw":
+			# A jagged mouth, every tooth a different size, on purpose.
+			var mouth: float = ink.position.y + ink.size.y * 0.62
+			var teeth: int = 7
+			for i: int in range(teeth):
+				var x0: float = lerpf(ink.position.x + 14.0, ink.end.x - 14.0, float(i) / float(teeth))
+				var x1: float = lerpf(ink.position.x + 14.0, ink.end.x - 14.0, float(i + 1) / float(teeth))
+				_stroke_open(image, PackedVector2Array([
+					Vector2(x0, mouth), Vector2((x0 + x1) * 0.5, mouth + rng.randf_range(16.0, 40.0)),
+					Vector2(x1, mouth)]), 3, rng)
+		"head_pencil_stub":
+			_stroke_open(image, PackedVector2Array([
+				Vector2(ink.get_center().x - 26.0, ink.end.y - 10.0),
+				Vector2(ink.get_center().x, ink.position.y + 18.0),
+				Vector2(ink.get_center().x + 26.0, ink.end.y - 10.0)]), 4, rng)
+		"head_anvil":
+			_wobbly_line(image, Vector2(ink.position.x + 6.0, ink.get_center().y),
+				Vector2(ink.end.x - 6.0, ink.get_center().y), 6, rng)
+		"legs_spring_coils":
+			for column: float in [-1.0, 1.0]:
+				var cx: float = pivot.x + column * ink.size.x * 0.24
+				for i: int in range(7):
+					var y: float = pivot.y + 26.0 + 18.0 * float(i)
+					_wobbly_line(image, Vector2(cx - 22.0, y), Vector2(cx + 22.0, y + 9.0), 3, rng)
+		"legs_tree_trunks":
+			for column: float in [-1.0, 1.0]:
+				var cx: float = pivot.x + column * ink.size.x * 0.24
+				_wobbly_line(image, Vector2(cx, pivot.y + 20.0),
+					Vector2(cx + rng.randf_range(-10.0, 10.0), ink.end.y - 20.0), 3, rng)
+		"arms_climber_claws":
+			for i: int in range(4):
+				var x: float = pivot.x - 24.0 + 16.0 * float(i)
+				_stroke_open(image, PackedVector2Array([
+					Vector2(x, ink.end.y - 46.0), Vector2(x + 7.0, ink.end.y - 4.0)]), 4, rng)
+		"arms_noodle_hookers":
+			_stroke_open(image, PackedVector2Array([
+				Vector2(pivot.x, pivot.y + 30.0),
+				Vector2(pivot.x + 26.0, pivot.y + 90.0),
+				Vector2(pivot.x - 26.0, pivot.y + 150.0),
+				Vector2(pivot.x + 18.0, ink.end.y - 12.0)]), 4, rng)
+		"tail_scorpion":
+			_stroke_closed(image, _blob(Vector2(ink.end.x - 26.0, ink.position.y + 26.0),
+				Vector2(18.0, 14.0), 7, rng), 4, rng)
+		"tail_eraser_club":
+			_stroke_closed(image, _blob(Vector2(ink.end.x - 34.0, ink.get_center().y),
+				Vector2(26.0, 26.0), 8, rng), 5, rng)
+		"back_bat_scraps":
+			# Holes are aerodynamic if you believe.
+			for _i: int in range(6):
+				_stroke_closed(image, _blob(
+					Vector2(rng.randf_range(ink.position.x + 20.0, ink.end.x - 20.0),
+						rng.randf_range(ink.position.y + 20.0, ink.end.y - 20.0)),
+					Vector2(11.0, 9.0), 6, rng), 3, rng)
+		"back_sketch_thrusters":
+			for column: float in [-1.0, 1.0]:
+				var cx: float = pivot.x + column * ink.size.x * 0.26
+				for i: int in range(3):
+					_stroke_open(image, PackedVector2Array([
+						Vector2(cx - 12.0, ink.end.y + 6.0 + 14.0 * float(i)),
+						Vector2(cx + 12.0, ink.end.y + 14.0 + 14.0 * float(i))]), 3, rng)
+	if slot == "":
+		pass
 
 
 func _hurtbox(part: Dictionary) -> Dictionary:

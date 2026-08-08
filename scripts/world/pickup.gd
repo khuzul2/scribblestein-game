@@ -60,6 +60,7 @@ func _build_visual() -> void:
 	var sprite: Sprite2D = Sprite2D.new()
 	sprite.name = "Sprite2D"
 	sprite.texture = load(_texture_path()) as Texture2D
+	LineBoil.apply(sprite)
 	add_child(sprite)
 
 	var shape_node: CollisionShape2D = CollisionShape2D.new()

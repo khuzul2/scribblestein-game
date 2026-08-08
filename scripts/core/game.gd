@@ -17,6 +17,7 @@ const FADE_SECONDS: float = 0.12
 ## Dev-only scenes, addressed by `--scene=`. Levels come from `levels.json`.
 const DEV_SCENES: Dictionary = {
 	"rig_preview": "res://scenes/dev/rig_preview.tscn",
+	"boil_probe": "res://scenes/dev/boil_probe.tscn",
 }
 
 @onready var scene_root: Node = $SceneRoot

@@ -16,7 +16,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 	var dim: ColorRect = ColorRect.new()
-	dim.color = Color(Paper.PAPER, 0.88)
+	dim.color = Paper.PAPER
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
 

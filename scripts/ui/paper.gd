@@ -11,9 +11,9 @@ extends RefCounted
 
 const INK: Color = Color("#000000")
 const PAPER: Color = Color("#f4f0e6")
-## The one concession to legibility: ink at reduced alpha for disabled text.
-## It is a UI tint, never a gameplay pixel.
-const FADED: Color = Color(0.0, 0.0, 0.0, 0.35)
+## De-emphasised text. Still pure ink — Mandate A1 allows no grey anywhere, so
+## hierarchy is carried by size and weight, never by a faded tint.
+const FADED: Color = INK
 
 const BORDER_WIDTH: int = 3
 const PADDING: int = 12

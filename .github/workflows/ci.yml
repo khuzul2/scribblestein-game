@@ -67,8 +67,21 @@ jobs:
       - name: Unit tests
         run: godot --headless -s tools/run_tests.gd
 
+      - name: Placeholder audio is up to date
+        run: |
+          godot --headless -s tools/generate_placeholder_audio.gd
+          if ! git diff --quiet -- assets/audio/; then
+            echo "::error::Generated placeholder audio differs from the committed set"
+            git diff --stat -- assets/audio/
+            exit 1
+          fi
+
       - name: Milestone acceptance criteria
-        run: ./tools/acceptance.sh
+        # The rendered-frame checks (line boil rate, palette purity) need a
+        # display; Xvfb provides one on a headless runner.
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb >/dev/null
+          ./tools/acceptance.sh
 
       - name: Boot smoke test
         run: |

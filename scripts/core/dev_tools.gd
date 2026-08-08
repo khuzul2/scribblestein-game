@@ -21,6 +21,16 @@ const DEFAULT_WARMUP_FRAMES: int = 12
 var options: Dictionary = {}
 var captured: PackedStringArray = PackedStringArray()
 
+## Accumulated process delta — the same clock a shader's `TIME` runs on. It is
+## neither the wall clock (which races ahead when a frame takes a long time to
+## encode) nor the frame count (which says nothing about pacing), and using
+## either of those instead makes a boil-rate measurement meaningless.
+var engine_time: float = 0.0
+
+
+func _process(delta: float) -> void:
+	engine_time += delta
+
 
 func _ready() -> void:
 	options = parse(OS.get_cmdline_user_args())
@@ -85,8 +95,14 @@ func _run_capture() -> void:
 	for _i: int in range(warmup):
 		await get_tree().process_frame
 
+	# Encoding a PNG takes longer than a frame, so captures are not evenly spaced.
+	# Stamp each with the engine clock the shader itself reads, so a rate measured
+	# against these stamps is exactly what the shader did.
+	var stamps: Array[int] = []
+
 	for index: int in range(count):
 		var path: String = target if count == 1 else "%s_%03d.png" % [target, index]
+		stamps.append(int(engine_time * 1000000.0))
 		var written: String = await capture(path)
 		if written != "":
 			captured.append(written)
@@ -94,9 +110,22 @@ func _run_capture() -> void:
 		for _s: int in range(stride - 1):
 			await get_tree().process_frame
 
+	if count > 1:
+		_write_frame_manifest(target, stamps)
+
 	captures_finished.emit(captured)
 	if not options.has("keep-running"):
 		get_tree().quit(0)
+
+
+## When each capture was taken, in microseconds, so a verifier can turn a count
+## of image changes into a rate per second of the same clock the shader reads.
+func _write_frame_manifest(target: String, stamps: Array[int]) -> void:
+	var file: FileAccess = FileAccess.open("%s_frames.json" % target, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(JSON.stringify({"stamps_usec": stamps}))
+	file.close()
 
 
 func _quit_after(seconds: float) -> void:

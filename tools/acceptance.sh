@@ -184,9 +184,63 @@ m5() {
   fi
 }
 
+# --------------------------------------------------------------------------- M6
+
+# Rendering-dependent checks need a display. On a headless box Xvfb provides one;
+# the dummy renderer --headless uses cannot produce a frame to grab.
+render() {
+  local args=("$@")
+  if command -v xvfb-run >/dev/null 2>&1; then
+    timeout 600 xvfb-run -a "$GODOT" --rendering-driver opengl3 --audio-driver Dummy       --fixed-fps 60 -- "${args[@]}" 2>&1
+  else
+    timeout 600 "$GODOT" --rendering-driver opengl3 --audio-driver Dummy       --fixed-fps 60 -- "${args[@]}" 2>&1
+  fi
+}
+
+m6() {
+  echo "M6 — Aesthetics & Audio"
+  local output
+  output="$(timeout 900 "$GODOT" --headless -s tools/run_tests.gd -- boil 2>&1)"
+  if [ $? -eq 0 ]; then
+    pass "boil is a texture effect only, per-instance phases, every sound present"
+  else
+    fail "boil is a texture effect only, per-instance phases, every sound present"
+    echo "$output" | tail -30
+  fi
+
+  local user_dir
+  user_dir="$("$GODOT" --headless --quit 2>/dev/null >/dev/null; echo "$HOME/.local/share/godot/app_userdata/Scribblestein")"
+  rm -f "$user_dir"/boil_*.png "$user_dir"/palette_*.png
+
+  # AC: one second of frames of a static boiling sprite must change 8-12 times.
+  # Captured small: a full-resolution PNG takes longer to encode than a frame
+  # takes to draw, which would spread the samples out and inflate the rate.
+  render 480x270 --scene=boil_probe --shot=user://boil --shot-count=180 --shot-stride=1 >/dev/null
+  output="$(timeout 300 "$GODOT" --headless -s tools/verify_frames.gd -- --boil=user://boil --count=180 2>&1)"
+  if [ $? -eq 0 ]; then
+    pass "$(grep -o 'Boil: .*' <<<"$output" | head -1)"
+  else
+    fail "the line boil steps at 8-12 FPS"
+    grep -E 'Boil:|  - ' <<<"$output"
+  fi
+
+  # AC: a finished frame contains only palette colours.
+  local scene
+  for scene in lab scratchpad; do
+    render 1920x1080 --scene="$scene" --shot="user://palette_$scene.png" --shot-after=50 >/dev/null
+    output="$(timeout 300 "$GODOT" --headless -s tools/verify_frames.gd --       --palette="user://palette_$scene.png" 2>&1)"
+    if [ $? -eq 0 ]; then
+      pass "a full frame of '$scene' contains only palette colours"
+    else
+      fail "a full frame of '$scene' contains only palette colours"
+      grep -E '  - ' <<<"$output"
+    fi
+  done
+}
+
 # --------------------------------------------------------------------------- run
 # Add each milestone's function name here as it lands.
-MILESTONES=(m0 m2 m3 m4 m5)
+MILESTONES=(m0 m2 m3 m4 m5 m6)
 
 for milestone in "${MILESTONES[@]}"; do
   if wanted "${milestone^^}" || [ ${#SELECTED[@]} -eq 0 ]; then

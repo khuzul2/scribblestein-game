@@ -23,6 +23,7 @@ var is_broken: bool = false
 
 
 func _ready() -> void:
+	LineBoil.apply(_sprite)
 	collision_layer = Layers.bit(Layers.WORLD_CRACKED)
 	collision_mask = 0
 	add_to_group("cracked_floors")
