@@ -4,26 +4,102 @@
       "name": "Misshapen Biped",
       "unlocked_by_default": true,
       "bones": {
-        "root":  { "parent": null,    "position": [0, 0] },
-        "hip":   { "parent": "root",  "position": [0, -150] },
-        "torso": { "parent": "hip",   "position": [0, -120] },
-        "head":  { "parent": "torso", "position": [0, -130] },
-        "arm_l": { "parent": "torso", "position": [-70, -40] },
-        "arm_r": { "parent": "torso", "position": [70, -40] },
-        "back":  { "parent": "torso", "position": [0, -60] },
-        "tail":  { "parent": "hip",   "position": [-60, -10] }
+        "root": {
+          "parent": null,
+          "position": [
+            0,
+            0
+          ]
+        },
+        "hip": {
+          "parent": "root",
+          "position": [
+            0,
+            -150
+          ]
+        },
+        "torso": {
+          "parent": "hip",
+          "position": [
+            0,
+            -120
+          ]
+        },
+        "head": {
+          "parent": "torso",
+          "position": [
+            0,
+            -130
+          ]
+        },
+        "arm_l": {
+          "parent": "torso",
+          "position": [
+            -70,
+            -40
+          ]
+        },
+        "arm_r": {
+          "parent": "torso",
+          "position": [
+            70,
+            -40
+          ]
+        },
+        "back": {
+          "parent": "torso",
+          "position": [
+            0,
+            -60
+          ]
+        },
+        "tail": {
+          "parent": "hip",
+          "position": [
+            -60,
+            -10
+          ]
+        }
       },
       "slots": {
-        "torso": { "kind": "core",     "required": true,  "bone": "torso" },
-        "legs":  { "kind": "movement", "required": true,  "bone": "hip",
-                   "note": "one part fills both visual legs" },
-        "head":  { "kind": "attack",   "required": false, "bone": "head",
-                   "wired_to": "attack_primary" },
-        "tail":  { "kind": "attack",   "required": false, "bone": "tail",
-                   "wired_to": "attack_secondary" },
-        "arms":  { "kind": "utility",  "required": false, "bone_pair": ["arm_l", "arm_r"],
-                   "note": "one part, mirrored onto both arm bones" },
-        "back":  { "kind": "utility",  "required": false, "bone": "back", "z_behind": true }
+        "torso": {
+          "kind": "core",
+          "required": true,
+          "bone": "torso"
+        },
+        "legs": {
+          "kind": "movement",
+          "required": true,
+          "bone": "hip",
+          "note": "one part fills both visual legs"
+        },
+        "head": {
+          "kind": "attack",
+          "required": false,
+          "bone": "head",
+          "wired_to": "attack_primary"
+        },
+        "tail": {
+          "kind": "attack",
+          "required": false,
+          "bone": "tail",
+          "wired_to": "attack_secondary"
+        },
+        "arms": {
+          "kind": "utility",
+          "required": false,
+          "bone_pair": [
+            "arm_l",
+            "arm_r"
+          ],
+          "note": "one part, mirrored onto both arm bones"
+        },
+        "back": {
+          "kind": "utility",
+          "required": false,
+          "bone": "back",
+          "z_behind": true
+        }
       },
       "idle_animation": "procedural_breathe",
       "notes": "Creature faces +X. Flip on scale.x for left. Bone-local hitboxes rotate with bones."
@@ -31,28 +107,96 @@
     "quadruped": {
       "name": "Crooked Quadruped",
       "unlocked_by_default": false,
-      "status": "STUB - implemented in Milestone 8",
       "bones": {
-        "root":       { "parent": null,    "position": [0, 0] },
-        "hip_rear":   { "parent": "root",  "position": [-110, -120] },
-        "hip_front":  { "parent": "root",  "position": [110, -120] },
-        "torso":      { "parent": "root",  "position": [0, -170] },
-        "head":       { "parent": "torso", "position": [150, -30] },
-        "back":       { "parent": "torso", "position": [0, -60] },
-        "tail":       { "parent": "hip_rear", "position": [-60, -20] }
+        "root": {
+          "parent": null,
+          "position": [
+            0,
+            0
+          ]
+        },
+        "hip_rear": {
+          "parent": "root",
+          "position": [
+            -110,
+            -120
+          ]
+        },
+        "hip_front": {
+          "parent": "root",
+          "position": [
+            110,
+            -120
+          ]
+        },
+        "torso": {
+          "parent": "root",
+          "position": [
+            0,
+            -170
+          ]
+        },
+        "head": {
+          "parent": "torso",
+          "position": [
+            150,
+            -30
+          ]
+        },
+        "back": {
+          "parent": "torso",
+          "position": [
+            0,
+            -60
+          ]
+        },
+        "tail": {
+          "parent": "hip_rear",
+          "position": [
+            -60,
+            -20
+          ]
+        }
       },
       "slots": {
-        "torso":      { "kind": "core",     "required": true,  "bone": "torso" },
-        "legs_front": { "kind": "movement", "required": true,  "bone": "hip_front" },
-        "legs_rear":  { "kind": "movement", "required": true,  "bone": "hip_rear" },
-        "head":       { "kind": "attack",   "required": false, "bone": "head",
-                        "wired_to": "attack_primary" },
-        "tail":       { "kind": "attack",   "required": false, "bone": "tail",
-                        "wired_to": "attack_secondary" },
-        "back":       { "kind": "utility",  "required": false, "bone": "back", "z_behind": true }
+        "torso": {
+          "kind": "core",
+          "required": true,
+          "bone": "torso"
+        },
+        "legs_front": {
+          "kind": "movement",
+          "required": true,
+          "bone": "hip_front"
+        },
+        "legs_rear": {
+          "kind": "movement",
+          "required": true,
+          "bone": "hip_rear"
+        },
+        "head": {
+          "kind": "attack",
+          "required": false,
+          "bone": "head",
+          "wired_to": "attack_primary"
+        },
+        "tail": {
+          "kind": "attack",
+          "required": false,
+          "bone": "tail",
+          "wired_to": "attack_secondary"
+        },
+        "back": {
+          "kind": "utility",
+          "required": false,
+          "bone": "back",
+          "z_behind": true
+        }
       },
       "movement_profile_override": "pounce",
-      "notes": "No arm slots; can_climb parts do not fit. Pounce spec lands with M8."
+      "notes": "Creature faces +X. Long and low: the torso is a barrel slung between two hips, so a quadruped stands about 100 px shorter than a biped built from the same torso. No arms slot, so can_climb parts cannot be equipped - a quadruped crosses vertical gaps by pouncing, not by climbing. Front and rear legs are separate slots (DECISIONS_NEEDED D2), so a build can mix sprinter forelegs with heavy haunches.",
+      "idle_animation": "procedural_breathe",
+      "unlock_cost": 400
     }
   }
 }

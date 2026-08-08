@@ -35,86 +35,106 @@ static func fall_time(distance: float) -> float:
 ## The furthest a build can travel horizontally in one leap, landing `drop`
 ## pixels below where it started, using every jump it has. Glide is handled
 ## separately because it converts height into an arbitrary amount of time.
-static func horizontal_reach(stats: CreatureStats, drop: float = 0.0) -> float:
+static func horizontal_reach(stats: CreatureStats, drop: float = 0.0,
+		blueprint_id: String = "biped") -> float:
 	var weight_class: String = WeightClass.class_for_weight(stats.total_weight)
+	var profile: Dictionary = profile_for(blueprint_id)
 	var speed: float = Config.cfg_float("movement.weight_classes.%s.max_speed" % weight_class) \
-		* stats.speed_mod
+		* stats.speed_mod * float(profile.get("max_speed_mult", 1.0))
 	var jump_velocity: float = Config.cfg_float(
-		"movement.weight_classes.%s.jump_velocity" % weight_class) * stats.jump_mod
+		"movement.weight_classes.%s.jump_velocity" % weight_class) * stats.jump_mod \
+		* float(profile.get("jump_velocity_mult", 1.0))
 	var gravity: float = Config.cfg_float("movement.gravity")
 
 	var rise: float = absf(jump_velocity) / gravity
 	var height: float = apex_height(jump_velocity)
+	var airtime: float = 0.0
 
 	if stats.has_effect("can_glide"):
 		# Rise, then descend at the glide cap for as long as the height lasts.
-		var glide_fall: float = (height + drop) / Config.cfg_float("movement.glide.glide_fall_cap")
-		return speed * (rise + glide_fall)
+		airtime = rise + (height + drop) / Config.cfg_float("movement.glide.glide_fall_cap")
+	else:
+		if stats.has_effect("double_jump"):
+			# Spend the second jump at the apex: it buys another rise, and the
+			# fall is from the combined height.
+			var second: float = absf(jump_velocity) \
+				* Config.cfg_float("movement.double_jump.velocity_mult")
+			rise += second / gravity
+			height += apex_height(second)
+		airtime = rise + fall_time(height + drop)
 
-	if stats.has_effect("double_jump"):
-		# Spend the second jump at the apex: it buys another rise, and the fall
-		# is from the combined height.
-		var second: float = absf(jump_velocity) * Config.cfg_float("movement.double_jump.velocity_mult")
-		rise += second / gravity
-		height += apex_height(second)
-	return speed * (rise + fall_time(height + drop))
+	return _flight_distance(speed, airtime, profile)
+
+
+## How far a flight of `airtime` seconds carries a creature whose running speed
+## is `speed`. Without a launch profile that is simply speed × time; a pounce
+## leaves the ground faster and bleeds back down, so its distance is the area
+## under the decaying speed curve.
+static func _flight_distance(speed: float, airtime: float, profile: Dictionary) -> float:
+	if not profile.has("launch_speed_mult") or airtime <= 0.0 or speed <= 0.0:
+		return speed * airtime
+
+	var launch: float = speed * float(profile["launch_speed_mult"])
+	var decay: float = float(profile.get("launch_decay", 0.0)) * speed
+	if decay <= 0.0:
+		return launch * airtime  # no bleed-off: the burst lasts the whole flight
+
+	var decay_time: float = (launch - speed) / decay
+	if airtime <= decay_time:
+		# Still decaying at touchdown: a trapezoid from `launch` down to whatever
+		# it has reached.
+		return airtime * (launch - decay * airtime * 0.5)
+	# The burst's trapezoid, then running speed for the rest of the flight.
+	return decay_time * (launch + speed) * 0.5 + speed * (airtime - decay_time)
+
+
+## `movement.profiles.<override>` for a blueprint, or empty for the default feel.
+static func profile_for(blueprint_id: String) -> Dictionary:
+	if not Config.blueprints.has(blueprint_id):
+		return {}
+	var override_id: String = str(Config.blueprint(blueprint_id)
+		.get("movement_profile_override", ""))
+	if override_id == "":
+		return {}
+	var profiles: Variant = Config.cfg("movement.profiles")
+	if profiles == null:
+		return {}
+	return (profiles as Dictionary).get(override_id, {}) as Dictionary
 
 
 ## The furthest reach of any legal loadout that lacks `effect_id`. This is the
 ## number a gate keyed to that effect has to beat.
+##
+## Delegated to `LoadoutSpace`, which finds the extreme without building every
+## loadout — six slots with eight parts each is 286,720 of them. `every_loadout`
+## below is kept as the reference implementation the search is tested against.
 static func best_reach_without(effect_id: String, drop: float = 0.0,
 		blueprint_id: String = "biped") -> float:
-	var best: float = 0.0
-	for loadout: Dictionary in every_loadout(blueprint_id):
-		var stats: CreatureStats = PartAssembler.preview_stats(loadout, blueprint_id)
-		if stats.has_effect(effect_id):
-			continue
-		best = maxf(best, horizontal_reach(stats, drop))
-	return best
+	return LoadoutSpace.best_reach_without(effect_id, drop, blueprint_id)
 
 
 ## The furthest reach of any legal loadout that *has* `effect_id`.
 static func best_reach_with(effect_id: String, drop: float = 0.0,
 		blueprint_id: String = "biped") -> float:
-	var best: float = 0.0
-	for loadout: Dictionary in every_loadout(blueprint_id):
-		var stats: CreatureStats = PartAssembler.preview_stats(loadout, blueprint_id)
-		if not stats.has_effect(effect_id):
-			continue
-		best = maxf(best, horizontal_reach(stats, drop))
-	return best
+	return LoadoutSpace.best_reach_with(effect_id, drop, blueprint_id)
 
 
 ## The shortest reach of any legal loadout carrying `effect_id` — what the
 ## *worst* build with the key can manage, which is what a gate must let through.
 static func worst_reach_with(effect_id: String, drop: float = 0.0,
 		blueprint_id: String = "biped") -> float:
-	var worst: float = INF
-	for loadout: Dictionary in every_loadout(blueprint_id):
-		var stats: CreatureStats = PartAssembler.preview_stats(loadout, blueprint_id)
-		if not stats.has_effect(effect_id):
-			continue
-		worst = minf(worst, horizontal_reach(stats, drop))
-	return worst if worst < INF else 0.0
+	return LoadoutSpace.worst_reach_with(effect_id, drop, blueprint_id)
 
 
-## Tallest and shortest a legal build stands, and how short it gets crouched —
-## the numbers a crawl tunnel's clearance has to sit between.
+## Tallest and shortest a legal build stands — the numbers a crawl tunnel's
+## clearance has to sit between.
 static func standing_height_range(blueprint_id: String = "biped") -> Vector2:
-	var shortest: float = INF
-	var tallest: float = 0.0
-	for loadout: Dictionary in every_loadout(blueprint_id):
-		var height: float = _hurtbox_height(loadout, blueprint_id)
-		if height <= 0.0:
-			continue
-		shortest = minf(shortest, height)
-		tallest = maxf(tallest, height)
-	return Vector2(shortest if shortest < INF else 0.0, tallest)
+	return LoadoutSpace.standing_height_range(blueprint_id)
 
 
 ## The vertical span of a loadout's hurtboxes, which is what the body collider
 ## is fitted to.
-static func _hurtbox_height(loadout: Dictionary, blueprint_id: String) -> float:
+static func hurtbox_height(loadout: Dictionary, blueprint_id: String) -> float:
 	var slots: Dictionary = Config.blueprint(blueprint_id)["slots"] as Dictionary
 	var bones: Dictionary = Config.blueprint(blueprint_id)["bones"] as Dictionary
 	var top: float = INF
@@ -149,9 +169,13 @@ static func _bone_y(bone_id: String, bones: Dictionary) -> float:
 	return total
 
 
-## Every loadout the catalogue can legally build for a blueprint. With 14 parts
-## across six slots this is a few hundred combinations — small enough to check
-## exhaustively, which is the point.
+## Every loadout the catalogue can legally build for a blueprint.
+##
+## This is the reference implementation: obviously correct, and the thing
+## `LoadoutSpace` is tested against in `tests/test_loadout_space.gd`. It is not
+## on any hot path, because the count is the product of the per-slot choices and
+## grows past a quarter of a million as the catalogue fills out. Use it to check
+## a claim, not to make one.
 static func every_loadout(blueprint_id: String = "biped") -> Array[Dictionary]:
 	var slots: Dictionary = Config.blueprint(blueprint_id)["slots"] as Dictionary
 	var options: Dictionary = {}

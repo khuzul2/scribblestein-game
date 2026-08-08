@@ -48,11 +48,46 @@ var _climb_sensor: Area2D = null
 var _step_distance: float = 0.0
 var _step_index: int = 0
 var _glide_cooldown: float = 0.0
+## `movement.profiles.<id>` for the creature's blueprint, or empty for the
+## default feel. Cached on assembly — a blueprint cannot change mid-life.
+var _profile: Dictionary = {}
+## True from a pounce's launch until it lands or its overspeed is spent.
+var _launching: bool = false
+## Whether the current launch has actually left the floor yet — a launch is set
+## on the frame the jump fires, while the creature is still grounded.
+var _launch_left_ground: bool = false
 
 
 func _ready() -> void:
 	creature = get_parent() as Creature
 	_climb_sensor = creature.get_node_or_null("ClimbSensor") as Area2D
+	refresh_profile()
+
+
+## Re-read the blueprint's movement profile. `Creature` calls this on assembly,
+## because the blueprint is what selects the profile.
+func refresh_profile() -> void:
+	_profile = {}
+	if creature == null or not Config.is_loaded:
+		return
+	if not Config.blueprints.has(creature.blueprint_id):
+		return
+	var override_id: String = str(Config.blueprint(creature.blueprint_id)
+		.get("movement_profile_override", ""))
+	if override_id == "":
+		return
+	var profiles: Variant = Config.cfg("movement.profiles")
+	if profiles == null or not (profiles as Dictionary).has(override_id):
+		push_error("Blueprint '%s' asks for movement profile '%s', which "
+			% [creature.blueprint_id, override_id]
+			+ "data/game_config.json /movement/profiles does not define.")
+		return
+	_profile = (profiles as Dictionary)[override_id] as Dictionary
+
+
+## A profile number, or `fallback` when this blueprint uses the default feel.
+func _profile_float(key: String, fallback: float) -> float:
+	return float(_profile.get(key, fallback))
 
 
 func _physics_process(delta: float) -> void:
@@ -173,10 +208,12 @@ func _update_jump(on_floor: bool, climbing: bool) -> void:
 
 	var grounded_enough: bool = on_floor or _coyote_remaining > 0.0
 	if _jump_buffer_remaining > 0.0 and grounded_enough:
-		creature.velocity.y = creature.weight_class.jump_velocity()
+		creature.velocity.y = creature.weight_class.jump_velocity() \
+			* _profile_float("jump_velocity_mult", 1.0)
+		_launch(on_floor)
 		_jump_buffer_remaining = 0.0
 		_coyote_remaining = 0.0
-		jumped.emit("jump")
+		jumped.emit("pounce" if _profile.has("launch_speed_mult") else "jump")
 		return
 
 	if climbing and _jump_buffer_remaining > 0.0:
@@ -190,6 +227,32 @@ func _update_jump(on_floor: bool, climbing: bool) -> void:
 		_double_jump_used = true
 		_jump_buffer_remaining = 0.0
 		jumped.emit("double_jump")
+
+
+## A pounce commits the body forward as it leaves the ground: the horizontal
+## velocity is set to `launch_speed_mult` of running speed toward the direction
+## being asked for, and `_move_horizontally` bleeds the overspeed off again.
+## Blueprints without a `launch_speed_mult` jump normally and this does nothing.
+func _launch(on_floor: bool) -> void:
+	if not _profile.has("launch_speed_mult") or not on_floor:
+		return
+	var direction: float = signf(intent.move_axis) if absf(intent.move_axis) > 0.2 \
+		else float(creature.facing)
+	creature.velocity.x = direction * _current_max_speed() \
+		* _profile_float("launch_speed_mult", 1.0)
+	_launching = true
+	_launch_left_ground = false
+
+
+## Bleed a pounce's launch overspeed back down to running speed. Without this a
+## leap would either stop dead the moment `move_toward` caught up, or carry its
+## burst for the whole flight — neither reads as an animal landing.
+func _decay_launch(delta: float) -> void:
+	var cap: float = _current_max_speed()
+	if absf(creature.velocity.x) <= cap:
+		return
+	var decay: float = _profile_float("launch_decay", 0.0) * cap * delta
+	creature.velocity.x = move_toward(creature.velocity.x, signf(creature.velocity.x) * cap, decay)
 
 
 func _wall_jump() -> void:
@@ -211,12 +274,32 @@ func _move_horizontally(delta: float, on_floor: bool, climbing: bool, rolling: b
 			creature.weight_class.deceleration() * delta)
 		return
 
-	var control: float = 1.0 if on_floor else creature.weight_class.air_control()
+	var control: float = 1.0 if on_floor \
+		else creature.weight_class.air_control() * _profile_float("air_control_mult", 1.0)
 	if is_gliding():
 		control *= Config.cfg_float("movement.glide.glide_air_control")
 
 	var target: float = 0.0 if stun_remaining > 0.0 \
 		else clampf(intent.move_axis, -1.0, 1.0) * _current_max_speed()
+
+	# A launch's overspeed is bled off on its own schedule; steering must not be
+	# able to cancel it, and letting go of the stick must not stop it dead.
+	#
+	# Gated on an actual launch, not merely on being over the speed cap: knockback
+	# also puts a creature over its cap, and it must keep decaying at the weight
+	# class' deceleration like it always has.
+	if _launching:
+		if on_floor and _launch_left_ground:
+			_launching = false
+		elif absf(creature.velocity.x) <= _current_max_speed():
+			_launching = false
+		else:
+			if not on_floor:
+				_launch_left_ground = true
+			_decay_launch(delta)
+			if absf(intent.move_axis) > 0.2 and stun_remaining <= 0.0:
+				creature.facing = 1 if intent.move_axis > 0.0 else -1
+			return
 
 	var rate: float = creature.weight_class.acceleration() if absf(target) > 0.01 \
 		else creature.weight_class.deceleration()
@@ -227,7 +310,8 @@ func _move_horizontally(delta: float, on_floor: bool, climbing: bool, rolling: b
 
 
 func _current_max_speed() -> float:
-	var speed: float = creature.weight_class.max_speed()
+	var speed: float = creature.weight_class.max_speed() \
+		* _profile_float("max_speed_mult", 1.0)
 	if _crouched:
 		speed *= Config.cfg_float("movement.crouch.speed_mult")
 	return speed

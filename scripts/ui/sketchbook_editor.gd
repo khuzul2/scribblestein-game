@@ -14,9 +14,11 @@ signal loadout_changed(loadout: Dictionary)
 signal play_requested
 signal unlock_requested
 signal map_requested
+signal blueprint_switched(blueprint_id: String)
 
-const BLUEPRINT_ID: String = "biped"
-
+## Which body type is being built. Read from the save on entry and changed by
+## the blueprint tabs, which only appear once a second one is unlocked.
+var blueprint_id: String = SaveManager.DEFAULT_BLUEPRINT
 var loadout: Dictionary = {}
 var selected_slot: String = "torso"
 
@@ -30,15 +32,44 @@ var _problem_label: Label = null
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	Paper.background(self)
+	blueprint_id = SaveManager.active_blueprint()
 	loadout = _sanitised(SaveManager.loadout())
 	_build()
 	refresh()
+
+
+## Change body type. The slots differ between blueprints, so the sketchbook's
+## right page is rebuilt from scratch; the loadout comes from the save, which
+## keeps one per blueprint — switching never throws a build away.
+func switch_blueprint(new_blueprint_id: String) -> bool:
+	if new_blueprint_id == blueprint_id:
+		return true
+	if not SaveManager.set_active_blueprint(new_blueprint_id):
+		Audio.sfx("sfx_ui_error_scratch")
+		return false
+
+	blueprint_id = new_blueprint_id
+	loadout = _sanitised(SaveManager.loadout())
+	if not (Config.blueprint(blueprint_id)["slots"] as Dictionary).has(selected_slot):
+		selected_slot = str((Config.blueprint(blueprint_id)["slots"] as Dictionary).keys()[0])
+
+	_slot_targets.clear()
+	for child: Node in get_children():
+		if child is Control and child.name == "Sketchbook":
+			remove_child(child)
+			child.queue_free()
+	_build()
+	refresh()
+	Audio.sfx("sfx_ui_page_turn")
+	blueprint_switched.emit(blueprint_id)
+	return true
 
 
 # --- layout --------------------------------------------------------------------
 
 func _build() -> void:
 	var root: VBoxContainer = VBoxContainer.new()
+	root.name = "Sketchbook"
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_theme_constant_override("separation", 8)
 	root.offset_left = 40
@@ -47,8 +78,14 @@ func _build() -> void:
 	root.offset_bottom = -28
 	add_child(root)
 
-	var title: Label = Paper.label("THE LAB — sketchbook", 40)
-	root.add_child(title)
+	var header: HBoxContainer = HBoxContainer.new()
+	header.add_theme_constant_override("separation", 28)
+	header.add_child(Paper.label("THE LAB — sketchbook", 40))
+	header.add_child(Paper.spacer())
+	var tabs: Control = _build_blueprint_tabs()
+	if tabs != null:
+		header.add_child(tabs)
+	root.add_child(header)
 	root.add_child(Paper.rule())
 
 	var pages: HBoxContainer = HBoxContainer.new()
@@ -61,6 +98,30 @@ func _build() -> void:
 
 	root.add_child(Paper.rule())
 	root.add_child(_build_bottom_bar())
+
+
+## One tab per unlocked body type. Returns null while only one is unlocked —
+## a chooser with a single choice is just clutter, and the quadruped is a
+## discovery (DESIGN §8), so it should appear when it is found.
+func _build_blueprint_tabs() -> Control:
+	var unlocked: PackedStringArray = PackedStringArray()
+	for candidate: Variant in Config.blueprints:
+		if SaveManager.is_blueprint_unlocked(str(candidate)):
+			unlocked.append(str(candidate))
+	if unlocked.size() < 2:
+		return null
+
+	var tabs: HBoxContainer = HBoxContainer.new()
+	tabs.name = "BlueprintTabs"
+	tabs.add_theme_constant_override("separation", 12)
+	for candidate: String in unlocked:
+		var label: String = str(Config.blueprint(candidate).get("name", candidate))
+		var is_current: bool = candidate == blueprint_id
+		var tab: Button = Paper.button(("[ %s ]" if is_current else "  %s  ") % label, 22)
+		tab.disabled = is_current
+		tab.pressed.connect(switch_blueprint.bind(candidate))
+		tabs.add_child(tab)
+	return tabs
 
 
 func _build_left_page() -> Control:
@@ -84,7 +145,8 @@ func _build_left_page() -> Control:
 
 
 func _build_right_page() -> Control:
-	var page: VBoxContainer = Paper.page("misshapen biped")
+	var page: VBoxContainer = Paper.page(
+		str(Config.blueprint(blueprint_id).get("name", blueprint_id)).to_lower())
 	page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var body: HBoxContainer = HBoxContainer.new()
@@ -100,10 +162,10 @@ func _build_right_page() -> Control:
 	slots_column.add_theme_constant_override("separation", 8)
 	body.add_child(slots_column)
 
-	for slot_id: Variant in (Config.blueprint(BLUEPRINT_ID)["slots"] as Dictionary):
+	for slot_id: Variant in (Config.blueprint(blueprint_id)["slots"] as Dictionary):
 		var slot: String = str(slot_id)
 		var target: SlotTarget = SlotTarget.create(slot,
-			(Config.blueprint(BLUEPRINT_ID)["slots"] as Dictionary)[slot] as Dictionary)
+			(Config.blueprint(blueprint_id)["slots"] as Dictionary)[slot] as Dictionary)
 		target.part_dropped.connect(_on_part_dropped)
 		target.cleared.connect(_on_slot_cleared)
 		target.gui_input.connect(_on_slot_clicked.bind(slot))
@@ -148,16 +210,16 @@ func _build_bottom_bar() -> Control:
 
 ## Redraw everything from the current loadout. Cheap enough to call on any change.
 func refresh() -> void:
-	var stats: CreatureStats = PartAssembler.preview_stats(loadout, BLUEPRINT_ID)
+	var stats: CreatureStats = PartAssembler.preview_stats(loadout, blueprint_id)
 	_readout.show_stats(stats)
 
 	for slot_id: Variant in _slot_targets:
 		(_slot_targets[slot_id] as SlotTarget).show_part(loadout.get(slot_id, null))
 
-	var problems: PackedStringArray = PartAssembler.validate(loadout, BLUEPRINT_ID)
+	var problems: PackedStringArray = PartAssembler.validate(loadout, blueprint_id)
 	_problem_label.text = "" if problems.is_empty() else "! %s" % "\n! ".join(problems)
 	if problems.is_empty():
-		_preview.show_loadout(loadout)
+		_preview.show_loadout(loadout, blueprint_id)
 		_preview.fit()
 
 	_rebuild_part_list()
@@ -168,7 +230,7 @@ func _rebuild_part_list() -> void:
 		_part_list.remove_child(child)
 		child.queue_free()
 
-	var slot_spec: Dictionary = (Config.blueprint(BLUEPRINT_ID)["slots"] as Dictionary)[selected_slot] as Dictionary
+	var slot_spec: Dictionary = (Config.blueprint(blueprint_id)["slots"] as Dictionary)[selected_slot] as Dictionary
 	_part_list.add_child(Paper.label(
 		"%s  ·  %s" % [selected_slot.to_upper(), str(slot_spec.get("kind", ""))], 24))
 
@@ -200,7 +262,7 @@ func owned_parts_for(slot: String) -> PackedStringArray:
 		var part: Dictionary = Config.parts[part_id] as Dictionary
 		if str(part["slot"]) != slot:
 			continue
-		if not (part["fits_blueprints"] as Array).has(BLUEPRINT_ID):
+		if not (part["fits_blueprints"] as Array).has(blueprint_id):
 			continue
 		if not SaveManager.is_unlocked(str(part_id)):
 			continue
@@ -211,12 +273,12 @@ func owned_parts_for(slot: String) -> PackedStringArray:
 
 ## What equipping `part_id` into `slot` would change, versus the current build.
 func deltas_for(slot: String, part_id: String) -> Dictionary:
-	var current: CreatureStats = PartAssembler.preview_stats(loadout, BLUEPRINT_ID)
+	var current: CreatureStats = PartAssembler.preview_stats(loadout, blueprint_id)
 	var candidate_loadout: Dictionary = loadout.duplicate(true)
 	candidate_loadout[slot] = part_id
-	var candidate: CreatureStats = PartAssembler.preview_stats(candidate_loadout, BLUEPRINT_ID)
+	var candidate: CreatureStats = PartAssembler.preview_stats(candidate_loadout, blueprint_id)
 
-	var slot_spec: Dictionary = (Config.blueprint(BLUEPRINT_ID)["slots"] as Dictionary)[slot] as Dictionary
+	var slot_spec: Dictionary = (Config.blueprint(blueprint_id)["slots"] as Dictionary)[slot] as Dictionary
 	var wired: String = str(slot_spec.get("wired_to", ""))
 	var attack_delta: float = 0.0
 	if wired != "":
@@ -234,7 +296,7 @@ func deltas_for(slot: String, part_id: String) -> Dictionary:
 func _equip(slot: String, part_id: Variant) -> void:
 	var candidate: Dictionary = loadout.duplicate(true)
 	candidate[slot] = part_id
-	var problems: PackedStringArray = PartAssembler.validate(candidate, BLUEPRINT_ID)
+	var problems: PackedStringArray = PartAssembler.validate(candidate, blueprint_id)
 	if not problems.is_empty():
 		Audio.sfx("sfx_ui_error_scratch")
 		_problem_label.text = "! %s" % "\n! ".join(problems)
@@ -293,6 +355,6 @@ func _highlight_compatible_slots(highlight: bool) -> void:
 ## by an older build cannot leave a hole in the sketchbook.
 func _sanitised(saved: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
-	for slot_id: Variant in (Config.blueprint(BLUEPRINT_ID)["slots"] as Dictionary):
+	for slot_id: Variant in (Config.blueprint(blueprint_id)["slots"] as Dictionary):
 		result[str(slot_id)] = saved.get(slot_id, null)
 	return result

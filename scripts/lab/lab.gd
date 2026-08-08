@@ -38,6 +38,7 @@ func _ready() -> void:
 	add_child(unlock_desk)
 	unlock_desk.closed.connect(_show.bind("editor"))
 	unlock_desk.part_unlocked.connect(_on_part_unlocked)
+	unlock_desk.blueprint_bought.connect(_on_blueprint_bought)
 
 	world_map = WorldMap.new()
 	world_map.name = "WorldMap"
@@ -72,6 +73,12 @@ func _on_level_chosen(level_id: String) -> void:
 ## sketchbook, without a reload.
 func _on_part_unlocked(_part_id: String) -> void:
 	editor.refresh()
+
+
+## Buying a body type adds a tab to the sketchbook, which is part of the page's
+## structure rather than its contents — so the whole editor is rebuilt.
+func _on_blueprint_bought(blueprint_id: String) -> void:
+	editor.switch_blueprint(blueprint_id)
 
 
 ## The loadout the player has committed to, for whatever scene comes next.

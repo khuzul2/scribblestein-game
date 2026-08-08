@@ -9,6 +9,7 @@ extends Control
 
 signal closed
 signal part_unlocked(part_id: String)
+signal blueprint_bought(blueprint_id: String)
 
 var _list: VBoxContainer = null
 var _wallet: Label = null
@@ -76,12 +77,74 @@ func refresh() -> void:
 		_list.add_child(Paper.label(
 			"no unspent sketches. kill what you want to become.", 20, Paper.FADED))
 
+	offered += _add_blueprint_rows()
+
 	_list.add_child(Paper.spacer(24))
 	_list.add_child(Paper.label("ALREADY YOURS", 22, Paper.FADED))
 	var owned: Array = SaveManager.unlocked_parts().duplicate()
 	owned.sort()
 	for part_id: Variant in owned:
 		_list.add_child(Paper.label("  %s" % str(Config.part(str(part_id))["name"]), 18, Paper.FADED))
+
+
+## Whole body types are sold here too. A part is a limb; a blueprint is the thing
+## the limbs hang off, so it is priced separately in `blueprints.json` and comes
+## with the free parts it needs to stand up (SaveManager.unlock_blueprint).
+func _add_blueprint_rows() -> int:
+	var rows: int = 0
+	for blueprint_id: Variant in Config.blueprints:
+		var blueprint: Dictionary = Config.blueprints[blueprint_id] as Dictionary
+		if SaveManager.is_blueprint_unlocked(str(blueprint_id)):
+			continue
+		if not blueprint.has("unlock_cost"):
+			continue
+		if rows == 0:
+			_list.add_child(Paper.spacer(24))
+			_list.add_child(Paper.label("WHOLE BODIES", 22, Paper.FADED))
+		rows += 1
+		_list.add_child(_blueprint_row(str(blueprint_id), blueprint))
+	return rows
+
+
+func _blueprint_row(blueprint_id: String, blueprint: Dictionary) -> Control:
+	var cost: int = int(blueprint["unlock_cost"])
+	var affordable: bool = SaveManager.ink >= cost
+
+	var frame: PanelContainer = PanelContainer.new()
+	frame.add_theme_stylebox_override("panel", Paper.panel())
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 20)
+	frame.add_child(row)
+
+	var slots: Dictionary = blueprint["slots"] as Dictionary
+	var text: VBoxContainer = VBoxContainer.new()
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.add_child(Paper.label(str(blueprint["name"]), 26))
+	text.add_child(Paper.label("BLUEPRINT · %s" % ", ".join(PackedStringArray(slots.keys())),
+		16, Paper.FADED))
+	row.add_child(text)
+
+	row.add_child(Paper.label("%d ink" % cost, 26,
+		Paper.INK if affordable else Paper.FADED))
+
+	var buy: Button = Paper.button("UNLOCK", 24)
+	buy.disabled = not affordable
+	buy.pressed.connect(_buy_blueprint.bind(blueprint_id))
+	row.add_child(buy)
+	return frame
+
+
+func _buy_blueprint(blueprint_id: String) -> void:
+	var cost: int = int(Config.blueprint(blueprint_id)["unlock_cost"])
+	if not SaveManager.spend_ink(cost):
+		Audio.sfx("sfx_ui_error_scratch")
+		return
+	SaveManager.unlock_blueprint(blueprint_id)
+	SaveManager.request_save()
+	Audio.sfx("sfx_unlock_kaching_mouth")
+	Audio.sfx("sfx_ui_stamp")
+	blueprint_bought.emit(blueprint_id)
+	refresh()
 
 
 func _row(part_id: String) -> Control:

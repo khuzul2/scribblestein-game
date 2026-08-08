@@ -1,31 +1,80 @@
 {
   "movement": {
     "gravity": 2400,
-    "coyote_time": 0.10,
+    "coyote_time": 0.1,
     "jump_buffer": 0.12,
     "terminal_fall_speed": 1400,
     "weight_classes": {
-      "light":  { "max_total_weight": 25,
-                  "max_speed": 340, "accel": 2600, "decel": 3000,
-                  "jump_velocity": -880, "air_control": 0.85,
-                  "knockback_taken_mult": 1.3, "camera_note": "tends to zoom tight" },
-      "medium": { "max_total_weight": 60,
-                  "max_speed": 270, "accel": 2000, "decel": 2400,
-                  "jump_velocity": -790, "air_control": 0.7,
-                  "knockback_taken_mult": 1.0 },
-      "heavy":  { "max_total_weight": 9999,
-                  "max_speed": 200, "accel": 1400, "decel": 1800,
-                  "jump_velocity": -660, "air_control": 0.55,
-                  "knockback_taken_mult": 0.5,
-                  "breaks_cracked_floors": true,
-                  "crack_break_min_land_speed": 900 }
+      "light": {
+        "max_total_weight": 25,
+        "max_speed": 340,
+        "accel": 2600,
+        "decel": 3000,
+        "jump_velocity": -880,
+        "air_control": 0.85,
+        "knockback_taken_mult": 1.3,
+        "camera_note": "tends to zoom tight"
+      },
+      "medium": {
+        "max_total_weight": 60,
+        "max_speed": 270,
+        "accel": 2000,
+        "decel": 2400,
+        "jump_velocity": -790,
+        "air_control": 0.7,
+        "knockback_taken_mult": 1.0
+      },
+      "heavy": {
+        "max_total_weight": 9999,
+        "max_speed": 200,
+        "accel": 1400,
+        "decel": 1800,
+        "jump_velocity": -660,
+        "air_control": 0.55,
+        "knockback_taken_mult": 0.5,
+        "breaks_cracked_floors": true,
+        "crack_break_min_land_speed": 900
+      }
     },
     "modifier_rules": "final max_speed = class.max_speed * product(part.speed_mod); final jump_velocity = class.jump_velocity * product(part.jump_mod)",
-    "glide": { "glide_fall_cap": 140, "glide_air_control": 1.2 },
-    "double_jump": { "velocity_mult": 0.85, "resets_on": ["floor", "wall_grab"] },
-    "climb": { "climb_speed": 150, "wall_jump_impulse": [420, -700] },
-    "roll": { "distance": 190, "duration": 0.32, "iframes": 0.26, "cooldown": 0.5 },
-    "crouch": { "speed_mult": 0.45, "hurtbox_height_mult": 0.5 }
+    "profiles": {
+      "pounce": {
+        "jump_velocity_mult": 0.8,
+        "launch_speed_mult": 1.7,
+        "launch_decay": 2.0,
+        "air_control_mult": 0.45,
+        "max_speed_mult": 1.15,
+        "note": "Crooked Quadruped (blueprints.json -> quadruped.movement_profile_override). Four legs run faster and leap flatter: a pounce trades jump height for a committed forward burst at launch_speed_mult of running speed, which decays back to it at launch_decay of max_speed per second. Steering mid-pounce is poor - air_control_mult multiplies the weight class' air_control."
+      }
+    },
+    "glide": {
+      "glide_fall_cap": 140,
+      "glide_air_control": 1.2
+    },
+    "double_jump": {
+      "velocity_mult": 0.85,
+      "resets_on": [
+        "floor",
+        "wall_grab"
+      ]
+    },
+    "climb": {
+      "climb_speed": 150,
+      "wall_jump_impulse": [
+        420,
+        -700
+      ]
+    },
+    "roll": {
+      "distance": 190,
+      "duration": 0.32,
+      "iframes": 0.26,
+      "cooldown": 0.5
+    },
+    "crouch": {
+      "speed_mult": 0.45,
+      "hurtbox_height_mult": 0.5
+    }
   },
   "combat": {
     "damage_formula": "max(1, attack_power - total_defense)",
@@ -39,22 +88,40 @@
   "economy": {
     "corpse_run": {
       "drop": "entire_wallet",
-      "blob_persists_across": ["level_restart", "return_to_hub", "game_restart"],
+      "blob_persists_across": [
+        "level_restart",
+        "return_to_hub",
+        "game_restart"
+      ],
       "second_death_overwrites": true,
       "blobs_max_per_level": 1
     },
     "blueprint_duplicate_ink_bonus": 15,
-    "correction_fluid": { "heal": 25, "despawn_seconds": 10 },
+    "correction_fluid": {
+      "heal": 25,
+      "despawn_seconds": 10
+    },
     "ink_pickup_magnet_radius": 90
   },
   "camera": {
-    "ref_height": 420, "zoom_min": 0.60, "zoom_max": 1.20,
-    "lerp_speed": 3.0, "lookahead_px": 80,
-    "drag_margin": [0.1, 0.1]
+    "ref_height": 420,
+    "zoom_min": 0.6,
+    "zoom_max": 1.2,
+    "lerp_speed": 3.0,
+    "lookahead_px": 80,
+    "drag_margin": [
+      0.1,
+      0.1
+    ]
   },
   "line_boil": {
-    "boil_fps": 10, "boil_fps_range": [8, 12],
-    "amplitude_px": 2.5, "ui_amplitude_px": 1.0,
+    "boil_fps": 10,
+    "boil_fps_range": [
+      8,
+      12
+    ],
+    "amplitude_px": 2.5,
+    "ui_amplitude_px": 1.0,
     "per_instance_random_seed": true
   },
   "notes": "Every number here is a starting value for tuning, not scripture - but it must be tuned HERE, never hardcoded (Mandate B1)."

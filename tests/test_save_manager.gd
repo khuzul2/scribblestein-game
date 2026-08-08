@@ -16,15 +16,28 @@ func after_each() -> void:
 func test_default_profile_matches_the_spec_shape() -> void:
 	var profile: Dictionary = SaveManager.default_save()
 	for key: String in ["version", "ink", "unlocked_parts", "blueprints_found", "kill_counters",
-			"loadout", "blueprint_unlocked", "levels", "settings"]:
+			"loadouts", "active_blueprint", "blueprint_unlocked", "levels", "settings"]:
 		is_true(profile.has(key), "the save carries '%s'" % key)
 	eq(int(profile["version"]), SaveManager.SAVE_VERSION, "version stamp")
 	eq(int(profile["ink"]), 0, "a new creature has no ink")
 	eq((profile["unlocked_parts"] as Array).size(), 3, "only the starter kit is unlocked")
+	eq(str(profile["active_blueprint"]), SaveManager.DEFAULT_BLUEPRINT, "starts as a biped")
+	eq((profile["blueprint_unlocked"] as Array), ["biped"], "the quadruped is a discovery")
+
+
+func test_every_blueprint_gets_its_own_loadout() -> void:
+	# The two body types have different slots, so one shared loadout would mean
+	# switching threw a build away.
+	var loadouts: Dictionary = SaveManager.default_save()["loadouts"] as Dictionary
+	for blueprint_id: Variant in Config.blueprints:
+		is_true(loadouts.has(blueprint_id), "a loadout exists for '%s'" % blueprint_id)
+		var slots: Dictionary = Config.blueprint(str(blueprint_id))["slots"] as Dictionary
+		eq((loadouts[blueprint_id] as Dictionary).keys().size(), slots.size(),
+			"'%s' has exactly its own slots" % blueprint_id)
 
 
 func test_default_loadout_wears_the_starter_kit() -> void:
-	var loadout: Dictionary = SaveManager.default_save()["loadout"] as Dictionary
+	var loadout: Dictionary = (SaveManager.default_save()["loadouts"] as Dictionary)["biped"] as Dictionary
 	eq(loadout["torso"], "torso_ribby", "starter torso equipped")
 	eq(loadout["legs"], "legs_scribble_sprint", "starter legs equipped")
 	eq(loadout["head"], "head_monster_maw", "starter head equipped")

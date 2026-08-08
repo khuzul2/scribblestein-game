@@ -134,6 +134,23 @@ func starter_part_ids() -> PackedStringArray:
 	return ids
 
 
+## Parts that cost nothing and fit `blueprint_id`. These are what a body type
+## arrives with: the biped's are its `starter` kit (DESIGN §8), and the
+## quadruped's come with the blueprint, so unlocking it never leaves you owning
+## a body you cannot put legs on.
+func free_part_ids(blueprint_id: String) -> PackedStringArray:
+	var ids: PackedStringArray = PackedStringArray()
+	for part_id: Variant in parts:
+		var part: Dictionary = parts[part_id] as Dictionary
+		if int(part.get("unlock_cost", 1)) != 0:
+			continue
+		if not (part.get("fits_blueprints", []) as Array).has(blueprint_id):
+			continue
+		ids.append(str(part_id))
+	ids.sort()
+	return ids
+
+
 ## Read a dotted path out of `game_config.json`, e.g. `cfg("movement.gravity")`.
 ## Missing paths are a programming error, not a tuning gap: assert, never default.
 func cfg(dotted_path: String) -> Variant:

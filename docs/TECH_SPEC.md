@@ -109,13 +109,18 @@ Constants live in `game_config.json → camera`. Position smoothing on, drag mar
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "ink": 0,
   "unlocked_parts": ["torso_ribby", "legs_scribble_sprint", "head_monster_maw"],
   "blueprints_found": [],
   "kill_counters": { "enemy_scribble_grunt": { "kills": 0, "since_drop": 0 } },
-  "loadout": { "torso": "torso_ribby", "legs": "legs_scribble_sprint",
-               "head": "head_monster_maw", "tail": null, "arms": null, "back": null },
+  "loadouts": {
+    "biped":     { "torso": "torso_ribby", "legs": "legs_scribble_sprint",
+                   "head": "head_monster_maw", "tail": null, "arms": null, "back": null },
+    "quadruped": { "torso": null, "legs_front": null, "legs_rear": null,
+                   "head": null, "tail": null, "back": null }
+  },
+  "active_blueprint": "biped",
   "blueprint_unlocked": ["biped"],
   "levels": {
     "level_01_margins": { "completed": false,
@@ -126,6 +131,19 @@ Constants live in `game_config.json → camera`. Position smoothing on, drag mar
 ```
 `death_blob: null` when none. Save on: level complete, death, unlock, exit-to-lab,
 loadout change. Atomic write (write temp → rename).
+
+**Version 2 (M9).** The two body types have different slots, so a single
+`loadout` could not hold both: it became `loadouts`, keyed by blueprint id, with
+`active_blueprint` naming the one being built and played. `_migrate` folds a
+version-1 save's `loadout` into `loadouts.biped` and drops the old key, so no
+build is lost. Each stored loadout is rebuilt against its blueprint's current
+slots on load — slots the blueprint no longer has are dropped, new ones arrive
+null, and a part that no longer exists in `parts_db.json` is cleared — so
+assembly can never be handed a shape it cannot build.
+
+Unlocking a blueprint also grants every zero-cost part that fits it
+(`Config.free_part_ids`), because a body type whose required slots have no
+affordable part would be dead on arrival.
 
 ## 9. JSON Loading Rules (Mandate B1)
 

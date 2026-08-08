@@ -75,10 +75,24 @@ parts never occupy an attack slot.
 - Arms are equipped **as a pair** (one part fills both `arm_l`/`arm_r` bones).
   Same for legs. Asymmetry is a post-v1 stretch goal.
 
-### 4.3 Blueprint: "Crooked Quadruped" (unlockable, post-slice)
-Slots: `torso`, `legs_front`, `legs_rear`, `head`, `tail`, `back`. No arms; gains a
-charge/pounce movement profile. Fully specced in `data/blueprints.json` as a stub;
-implemented in Milestone 8. Parts declare compatibility via `fits_blueprints`.
+### 4.3 Blueprint: "Crooked Quadruped" (unlockable)
+Slots: `torso`, `legs_front`, `legs_rear`, `head`, `tail`, `back`. No arms, so
+`can_climb` parts cannot be equipped — a quadruped crosses vertical ground by
+pouncing, not climbing. Parts declare compatibility via `fits_blueprints`.
+
+Implemented in M9. Front and rear legs are **separate slots** with their own parts
+(`DECISIONS_NEEDED.md` D2), so a build can pair sprinter forelegs with heavy
+haunches. Bought at the Unlock Desk for `blueprints.json → quadruped.unlock_cost`;
+buying it also grants every zero-cost part that fits it, because a body whose
+required slots have no affordable part would be dead on arrival. Each body type
+keeps its own loadout in the save, so switching never costs you a build.
+
+**Pounce** (`game_config.json → movement.profiles.pounce`): four legs run faster
+and leap flatter. A jump keeps `jump_velocity_mult` of the class' height but
+commits the body forward at `launch_speed_mult` of running speed, bleeding back
+down at `launch_decay`; steering mid-pounce is poor (`air_control_mult`). The
+burst is only spent by the launch — knockback still decays at the weight class'
+normal deceleration.
 
 ## 5. Weight Classes (Decision 2)
 

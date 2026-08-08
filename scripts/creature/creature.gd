@@ -69,6 +69,9 @@ func _ready() -> void:
 ## success. Callers that treat a failure as fatal should say so themselves — the
 ## Lab wants to show the message, a level wants to refuse to start.
 func assemble(loadout: Dictionary, refill_health: bool = true) -> PackedStringArray:
+	# The blueprint may have changed since the last build, and it is what selects
+	# the movement profile — so re-read it before anything moves.
+	locomotion.refresh_profile()
 	var problems: PackedStringArray = PartAssembler.assemble(self, loadout)
 	if not problems.is_empty():
 		for problem: String in problems:

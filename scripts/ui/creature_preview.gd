@@ -49,7 +49,8 @@ func _ready() -> void:
 
 
 ## Rebuild the mannequin. Rejected loadouts leave the previous pose standing.
-func show_loadout(loadout: Dictionary) -> PackedStringArray:
+func show_loadout(loadout: Dictionary, blueprint_id: String = "") -> PackedStringArray:
+	creature.blueprint_id = SaveManager.active_blueprint() if blueprint_id == "" else blueprint_id
 	return creature.assemble(loadout)
 
 

@@ -9,12 +9,18 @@ extends Node
 
 const SAVE_PATH: String = "user://save.json"
 const TEMP_PATH: String = "user://save.json.tmp"
-const SAVE_VERSION: int = 1
+## Bumped to 2 in M9: `loadout` became `loadouts`, one per blueprint, alongside
+## `active_blueprint`. `_migrate` folds a version-1 save in without loss.
+const SAVE_VERSION: int = 2
+## The body type every profile starts in and falls back to.
+const DEFAULT_BLUEPRINT: String = "biped"
 
 signal saved
 signal loaded
 signal ink_changed(amount: int)
 signal loadout_changed(loadout: Dictionary)
+signal blueprint_changed(blueprint_id: String)
+signal blueprint_unlocked(blueprint_id: String)
 
 var data: Dictionary = {}
 
@@ -29,25 +35,26 @@ func _ready() -> void:
 
 ## Build the starting profile: the always-unlocked kit worn, no ink, no progress.
 func default_save() -> Dictionary:
-	var starters: PackedStringArray = Config.starter_part_ids()
-	var loadout: Dictionary = _empty_loadout()
-	for part_id: String in starters:
-		var slot: String = str(Config.part(part_id).get("slot", ""))
-		if loadout.has(slot):
-			loadout[slot] = part_id
-
 	var counters: Dictionary = {}
 	for enemy_id: Variant in Config.enemies:
 		counters[str(enemy_id)] = {"kills": 0, "since_drop": 0}
 
+	var unlocked_blueprints: Array = []
+	for blueprint_id: Variant in Config.blueprints:
+		if bool((Config.blueprints[blueprint_id] as Dictionary).get("unlocked_by_default", false)):
+			unlocked_blueprints.append(str(blueprint_id))
+
 	return {
 		"version": SAVE_VERSION,
 		"ink": 0,
-		"unlocked_parts": Array(starters),
+		"unlocked_parts": Array(Config.starter_part_ids()),
 		"blueprints_found": [],
 		"kill_counters": counters,
-		"loadout": loadout,
-		"blueprint_unlocked": ["biped"],
+		# One loadout per body type, because their slots differ. Switching
+		# blueprints in the Lab must not throw away the build you had.
+		"loadouts": _default_loadouts(),
+		"active_blueprint": DEFAULT_BLUEPRINT,
+		"blueprint_unlocked": unlocked_blueprints,
 		"levels": {},
 		"settings": {"volume_master": 1.0, "volume_music": 0.8, "volume_sfx": 1.0},
 	}
@@ -152,21 +159,86 @@ func add_blueprint_sketch(part_id: String) -> void:
 		blueprints_found().append(part_id)
 
 
-func loadout() -> Dictionary:
-	return data.get("loadout", {}) as Dictionary
+# --- blueprints ----------------------------------------------------------------
+
+## Which body type the player is currently building and playing.
+func active_blueprint() -> String:
+	var active: String = str(data.get("active_blueprint", DEFAULT_BLUEPRINT))
+	# A save that names a blueprint this build no longer ships, or one the player
+	# has not unlocked, must not strand them with an unbuildable creature.
+	if not Config.blueprints.has(active) or not is_blueprint_unlocked(active):
+		return DEFAULT_BLUEPRINT
+	return active
 
 
-func set_loadout(new_loadout: Dictionary) -> void:
-	data["loadout"] = new_loadout.duplicate(true)
-	loadout_changed.emit(loadout())
+func unlocked_blueprints() -> Array:
+	return data.get("blueprint_unlocked", [DEFAULT_BLUEPRINT]) as Array
+
+
+func is_blueprint_unlocked(blueprint_id: String) -> bool:
+	return unlocked_blueprints().has(blueprint_id)
+
+
+## Discovering a body type also grants its free parts. Without that you could
+## own the Crooked Quadruped and have nothing to stand it on, since its legs live
+## in slots no biped part can fill.
+func unlock_blueprint(blueprint_id: String) -> void:
+	if not Config.blueprints.has(blueprint_id) or is_blueprint_unlocked(blueprint_id):
+		return
+	unlocked_blueprints().append(blueprint_id)
+	for part_id: String in Config.free_part_ids(blueprint_id):
+		unlock_part(part_id)
+	loadouts()[blueprint_id] = _starting_loadout(blueprint_id)
+	blueprint_unlocked.emit(blueprint_id)
 	request_save()
 
 
-func set_loadout_slot(slot: String, part_id: Variant) -> void:
-	var current: Dictionary = loadout()
+## Switch body type. Refused — with a `false` return, not a crash — for an
+## unknown or still-locked blueprint.
+func set_active_blueprint(blueprint_id: String) -> bool:
+	if not Config.blueprints.has(blueprint_id) or not is_blueprint_unlocked(blueprint_id):
+		return false
+	if blueprint_id == active_blueprint():
+		return true
+	data["active_blueprint"] = blueprint_id
+	blueprint_changed.emit(blueprint_id)
+	loadout_changed.emit(loadout())
+	request_save()
+	return true
+
+
+# --- loadouts ------------------------------------------------------------------
+
+## Every stored loadout, keyed by blueprint id.
+func loadouts() -> Dictionary:
+	if not data.has("loadouts"):
+		data["loadouts"] = _default_loadouts()
+	return data["loadouts"] as Dictionary
+
+
+## The loadout for the active body type, or for `blueprint_id` if given.
+func loadout(blueprint_id: String = "") -> Dictionary:
+	var key: String = active_blueprint() if blueprint_id == "" else blueprint_id
+	var all: Dictionary = loadouts()
+	if not all.has(key):
+		all[key] = _empty_loadout(key)
+	return all[key] as Dictionary
+
+
+func set_loadout(new_loadout: Dictionary, blueprint_id: String = "") -> void:
+	var key: String = active_blueprint() if blueprint_id == "" else blueprint_id
+	loadouts()[key] = new_loadout.duplicate(true)
+	if key == active_blueprint():
+		loadout_changed.emit(loadout())
+	request_save()
+
+
+func set_loadout_slot(slot: String, part_id: Variant, blueprint_id: String = "") -> void:
+	var key: String = active_blueprint() if blueprint_id == "" else blueprint_id
+	var current: Dictionary = loadout(key)
 	current[slot] = part_id
-	data["loadout"] = current
-	loadout_changed.emit(current)
+	if key == active_blueprint():
+		loadout_changed.emit(current)
 	request_save()
 
 
@@ -224,11 +296,32 @@ func settings() -> Dictionary:
 
 # --- internals -----------------------------------------------------------------
 
-func _empty_loadout() -> Dictionary:
+func _empty_loadout(blueprint_id: String = DEFAULT_BLUEPRINT) -> Dictionary:
 	var loadout_template: Dictionary = {}
-	for slot_id: Variant in (Config.blueprint("biped").get("slots", {}) as Dictionary):
+	if not Config.blueprints.has(blueprint_id):
+		return loadout_template
+	for slot_id: Variant in (Config.blueprint(blueprint_id).get("slots", {}) as Dictionary):
 		loadout_template[str(slot_id)] = null
 	return loadout_template
+
+
+## What a body type is wearing the first time you build one: its free parts, one
+## per slot. A part only lands in a blueprint that has its slot *and* that it
+## declares it fits, so the quadruped starts on its own legs.
+func _starting_loadout(blueprint_id: String) -> Dictionary:
+	var loadout_template: Dictionary = _empty_loadout(blueprint_id)
+	for part_id: String in Config.free_part_ids(blueprint_id):
+		var slot: String = str(Config.part(part_id).get("slot", ""))
+		if loadout_template.has(slot) and loadout_template[slot] == null:
+			loadout_template[slot] = part_id
+	return loadout_template
+
+
+func _default_loadouts() -> Dictionary:
+	var all: Dictionary = {}
+	for blueprint_id: Variant in Config.blueprints:
+		all[str(blueprint_id)] = _starting_loadout(str(blueprint_id))
+	return all
 
 
 ## Fill in anything a newer build expects but an older save lacks. Never drops
@@ -239,9 +332,25 @@ func _migrate(loaded_data: Dictionary) -> Dictionary:
 		merged[key] = loaded_data[key]
 	merged["version"] = SAVE_VERSION
 
-	var loadout_data: Dictionary = merged.get("loadout", {}) as Dictionary
-	for slot: Variant in _empty_loadout():
-		if not loadout_data.has(slot):
-			loadout_data[slot] = null
-	merged["loadout"] = loadout_data
+	# Saves written before per-blueprint loadouts kept a single `loadout` at the
+	# top level, which was always the biped's. Fold it in rather than lose it.
+	if loaded_data.has("loadout") and not loaded_data.has("loadouts"):
+		var legacy: Dictionary = (merged["loadouts"] as Dictionary).duplicate(true)
+		legacy[DEFAULT_BLUEPRINT] = (loaded_data["loadout"] as Dictionary).duplicate(true)
+		merged["loadouts"] = legacy
+	merged.erase("loadout")
+
+	# Every blueprint gets a complete loadout, with unknown slots dropped and
+	# missing ones nulled, so assembly never sees a shape it cannot build.
+	var stored: Dictionary = merged.get("loadouts", {}) as Dictionary
+	var rebuilt: Dictionary = {}
+	for blueprint_id: Variant in Config.blueprints:
+		var key: String = str(blueprint_id)
+		var slots: Dictionary = _empty_loadout(key)
+		var previous: Dictionary = stored.get(key, {}) as Dictionary
+		for slot: Variant in slots:
+			var part_id: Variant = previous.get(slot, null)
+			slots[slot] = part_id if part_id == null or Config.parts.has(part_id) else null
+		rebuilt[key] = slots
+	merged["loadouts"] = rebuilt
 	return merged

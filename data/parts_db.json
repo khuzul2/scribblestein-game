@@ -226,6 +226,156 @@
       ],
       "flavor": "Boing, sketched phonetically."
     },
+    "legs_front_scuttlers": {
+      "name": "Scuttler Forelegs",
+      "slot": "legs_front",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_front_scuttlers.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 5,
+      "unlock_cost": 0,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "speed_mod": 1.2,
+        "jump_mod": 1.0
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            30,
+            60
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "speed_boost"
+      ],
+      "flavor": "Too many joints, all of them wrong. Very quick about it."
+    },
+    "legs_front_paw_hammers": {
+      "name": "Paw Hammers",
+      "slot": "legs_front",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_front_paw_hammers.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 28,
+      "unlock_cost": 120,
+      "stats": {
+        "hp_bonus": 15,
+        "defense": 3,
+        "speed_mod": 0.9,
+        "jump_mod": 0.95
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            42,
+            60
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [],
+      "flavor": "Drawn heavy, so they land heavy."
+    },
+    "legs_rear_haunches": {
+      "name": "Spring Haunches",
+      "slot": "legs_rear",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_rear_haunches.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 5,
+      "unlock_cost": 0,
+      "stats": {
+        "hp_bonus": 0,
+        "defense": 0,
+        "speed_mod": 1.0,
+        "jump_mod": 1.2
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            30,
+            60
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "jump_boost"
+      ],
+      "flavor": "All the pounce lives back here."
+    },
+    "legs_rear_dragging_stumps": {
+      "name": "Dragging Stumps",
+      "slot": "legs_rear",
+      "fits_blueprints": [
+        "quadruped"
+      ],
+      "texture_path": "res://assets/parts/legs/legs_rear_dragging_stumps.png",
+      "pivot": {
+        "x": 192,
+        "y": 40
+      },
+      "weight": 30,
+      "unlock_cost": 120,
+      "stats": {
+        "hp_bonus": 25,
+        "defense": 3,
+        "speed_mod": 0.85,
+        "jump_mod": 0.85
+      },
+      "hitboxes": [
+        {
+          "shape": "rectangle",
+          "extents": [
+            44,
+            60
+          ],
+          "offset": [
+            0,
+            60
+          ],
+          "type": "hurtbox"
+        }
+      ],
+      "effects": [
+        "crouch"
+      ],
+      "flavor": "They do not so much walk as get taken along."
+    },
     "head_monster_maw": {
       "name": "Jagged Monster Maw",
       "slot": "head",

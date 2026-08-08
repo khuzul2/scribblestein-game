@@ -59,6 +59,9 @@ func _spawn_player() -> void:
 	player = (load(CREATURE_SCENE) as PackedScene).instantiate() as Creature
 	player.name = "Player"
 	player.is_player = true
+	# The body type is a save-level choice, so a level plays whichever one was
+	# last built in the Lab rather than assuming a biped.
+	player.blueprint_id = SaveManager.active_blueprint()
 	player.position = spawn_point
 	add_child(player)
 
