@@ -1,0 +1,80 @@
+{
+  "enemies": {
+    "enemy_scribble_grunt": {
+      "name": "Scribble Grunt",
+      "blueprint": "biped",
+      "assembly": {
+        "torso": "torso_ribby",
+        "legs": "legs_scribble_sprint",
+        "head": "head_monster_maw",
+        "tail": null, "arms": null, "back": null
+      },
+      "hp_override": 60,
+      "ai": {
+        "profile": "ground_chaser",
+        "patrol_speed": 120, "chase_speed": 230,
+        "aggro_radius": 420, "deaggro_radius": 700,
+        "attack_range": 90, "attack_cooldown": 1.2
+      },
+      "drops": {
+        "ink": { "min": 8, "max": 14 },
+        "blueprint": { "part": "head_monster_maw", "drop_chance": 0.15, "pity_kills": 6 },
+        "correction_fluid_chance": 0.20
+      },
+      "voice": "sfx_voice_grunt"
+    },
+    "enemy_wall_crawler": {
+      "name": "Wall Crawler",
+      "blueprint": "biped",
+      "assembly": {
+        "torso": "torso_ribby",
+        "legs": "legs_scribble_sprint",
+        "head": "head_pencil_stub",
+        "tail": null, "arms": "arms_climber_claws", "back": null
+      },
+      "hp_override": 45,
+      "ai": {
+        "profile": "wall_patroller",
+        "patrol_speed": 140, "chase_speed": 200,
+        "aggro_radius": 380, "deaggro_radius": 650,
+        "attack_range": 80, "attack_cooldown": 0.9,
+        "notes": "Patrols climbable walls and floors; drops onto player from above when aggro'd."
+      },
+      "drops": {
+        "ink": { "min": 10, "max": 16 },
+        "blueprint": { "part": "arms_climber_claws", "drop_chance": 0.15, "pity_kills": 6 },
+        "correction_fluid_chance": 0.20
+      },
+      "voice": "sfx_voice_crawler"
+    },
+    "enemy_stinger": {
+      "name": "Stinger",
+      "blueprint": "biped",
+      "assembly": {
+        "torso": "torso_ribby",
+        "legs": "legs_spring_coils",
+        "head": null,
+        "tail": "tail_scorpion", "arms": null, "back": "back_bat_scraps"
+      },
+      "hp_override": 40,
+      "ai": {
+        "profile": "glide_harasser",
+        "patrol_speed": 110, "chase_speed": 190,
+        "aggro_radius": 500, "deaggro_radius": 800,
+        "attack_range": 130, "attack_cooldown": 1.5,
+        "notes": "Hops off ledges and glides toward the player; stings on close pass, then retreats."
+      },
+      "drops": {
+        "ink": { "min": 12, "max": 20 },
+        "blueprint": { "part": "back_bat_scraps", "drop_chance": 0.15, "pity_kills": 6 },
+        "correction_fluid_chance": 0.20
+      },
+      "voice": "sfx_voice_stinger"
+    }
+  },
+  "notes": [
+    "Enemies use the identical creature scene + assembly pipeline (Mandate B2). hp_override replaces the computed max_hp for tuning; all other stats derive from parts.",
+    "Each enemy's blueprint drop teaches the part it visibly uses - players learn 'kill what you want to become'.",
+    "Stinger has no head: its primary attack is simply absent, exactly like a player build would be."
+  ]
+}

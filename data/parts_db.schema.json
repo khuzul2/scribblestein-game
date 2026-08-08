@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Scribblestein parts_db",
+  "type": "object",
+  "required": ["parts"],
+  "properties": {
+    "parts": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/definitions/part" }
+    }
+  },
+  "definitions": {
+    "part": {
+      "type": "object",
+      "required": ["name", "slot", "fits_blueprints", "texture_path", "pivot",
+                   "weight", "unlock_cost", "stats", "hitboxes", "effects"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "slot": { "enum": ["torso", "legs", "legs_front", "legs_rear",
+                            "head", "tail", "arms", "back"] },
+        "fits_blueprints": {
+          "type": "array", "minItems": 1,
+          "items": { "enum": ["biped", "quadruped"] }
+        },
+        "texture_path": { "type": "string", "pattern": "^res://assets/parts/.+\\.png$" },
+        "pivot": {
+          "type": "object", "required": ["x", "y"], "additionalProperties": false,
+          "properties": { "x": { "type": "number" }, "y": { "type": "number" } }
+        },
+        "weight": { "type": "number", "minimum": 0 },
+        "unlock_cost": { "type": "integer", "minimum": 0 },
+        "starter": { "type": "boolean" },
+        "stats": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "base_hp": { "type": "number", "minimum": 1 },
+            "hp_bonus": { "type": "number", "minimum": 0 },
+            "defense": { "type": "number", "minimum": 0 },
+            "attack_power": { "type": "number", "minimum": 1 },
+            "speed_mod": { "type": "number", "exclusiveMinimum": 0 },
+            "jump_mod": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "attack": {
+          "type": "object",
+          "required": ["windup", "active", "recovery", "cooldown", "knockback", "hitstun"],
+          "additionalProperties": false,
+          "properties": {
+            "windup":   { "type": "number", "minimum": 0 },
+            "active":   { "type": "number", "exclusiveMinimum": 0 },
+            "recovery": { "type": "number", "minimum": 0 },
+            "cooldown": { "type": "number", "minimum": 0 },
+            "knockback": { "type": "number", "minimum": 0 },
+            "hitstun":  { "type": "number", "minimum": 0 }
+          }
+        },
+        "hitboxes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["shape", "offset", "type"],
+            "additionalProperties": false,
+            "properties": {
+              "shape": { "enum": ["circle", "rectangle"] },
+              "radius": { "type": "number", "exclusiveMinimum": 0 },
+              "extents": {
+                "type": "array", "minItems": 2, "maxItems": 2,
+                "items": { "type": "number", "exclusiveMinimum": 0 }
+              },
+              "offset": {
+                "type": "array", "minItems": 2, "maxItems": 2,
+                "items": { "type": "number" }
+              },
+              "type": { "enum": ["damage", "hurtbox"] }
+            },
+            "allOf": [
+              { "if": { "properties": { "shape": { "const": "circle" } } },
+                "then": { "required": ["radius"] } },
+              { "if": { "properties": { "shape": { "const": "rectangle" } } },
+                "then": { "required": ["extents"] } }
+            ]
+          }
+        },
+        "effects": { "type": "array", "items": { "type": "string" } },
+        "flavor": { "type": "string" }
+      },
+      "allOf": [
+        { "if": { "properties": { "slot": { "const": "torso" } } },
+          "then": { "properties": { "stats": { "required": ["base_hp"] } } } },
+        { "if": { "properties": { "hitboxes": { "contains": {
+              "properties": { "type": { "const": "damage" } } } } } },
+          "then": { "required": ["attack"] } }
+      ]
+    }
+  },
+  "notes": "Cross-file checks done in code at boot: effect ids exist in effects.json; effect slot_kinds match the part's slot kind; damage-hitbox parts sit only in attack slots; starter parts cost 0."
+}

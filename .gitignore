@@ -1,0 +1,14 @@
+# Godot 4
+.godot/
+*.tmp
+
+# Exports
+exports/
+export_credentials.cfg
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
