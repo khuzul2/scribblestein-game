@@ -256,8 +256,10 @@ func _roll_speed() -> float:
 
 
 func _update_crouch(on_floor: bool, rolling: bool, climbing: bool) -> void:
-	var should_crouch: bool = creature.has_effect("crouch") and on_floor \
-		and intent.crouch_held and not rolling and not climbing
+	# A roll ducks too: effects.json promises a roll "fits under crawl tunnels
+	# only while rolling", which is only true if it actually shrinks the creature.
+	var should_crouch: bool = rolling \
+		or (creature.has_effect("crouch") and on_floor and intent.crouch_held and not climbing)
 	if should_crouch == _crouched:
 		return
 	_crouched = should_crouch

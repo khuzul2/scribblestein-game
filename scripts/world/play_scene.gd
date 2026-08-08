@@ -27,7 +27,13 @@ var spawn_point: Vector2 = Vector2.ZERO
 ## timer alone still delivers.
 var drop_rng: RandomNumberGenerator = null
 
+## How far below the lowest ground a creature may fall before the level catches
+## it. Nothing in Scribblestein is a bottomless pit.
+const FALL_MARGIN_PX: float = 900.0
+
 var _enemies: Array[Creature] = []
+var _lowest_ground_y: float = -INF
+var _last_safe_position: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
@@ -66,6 +72,7 @@ func _spawn_player() -> void:
 		push_error("Cannot enter '%s': %s" % [level_id, ", ".join(problems)])
 		exit_requested.emit.call_deferred()
 		return
+	_last_safe_position = spawn_point
 	player.camera.snap_to_target()
 
 
@@ -83,6 +90,31 @@ func _build_ui() -> void:
 	pause_menu.name = "PauseMenu"
 	layer.add_child(pause_menu)
 	pause_menu.return_to_lab.connect(func() -> void: exit_requested.emit())
+
+
+## Catch anything that falls out of the world. `game_config.json` asks for
+## `hazard_respawn_at_last_ground`, so a fall costs hazard damage and puts the
+## player back where it last had its feet down — not a death, and never an
+## endless drop.
+func _physics_process(_delta: float) -> void:
+	if player == null or player.health.is_dead():
+		return
+	if player.is_on_floor():
+		_last_safe_position = player.global_position
+	elif player.global_position.y > _lowest_ground_y + FALL_MARGIN_PX:
+		_catch_fall()
+
+
+func _catch_fall() -> void:
+	player.global_position = _last_safe_position
+	player.velocity = Vector2.ZERO
+	Combat.resolve_hazard(player, Config.cfg_int("combat.hazard_damage"), _last_safe_position)
+	player.camera.snap_to_target()
+
+
+## Track the lowest floor the level built, so the catch line sits below it.
+func _note_ground(rect: Rect2) -> void:
+	_lowest_ground_y = maxf(_lowest_ground_y, rect.end.y)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -144,6 +176,7 @@ func respawn_player() -> void:
 	player.velocity = Vector2.ZERO
 	player.health.set_maximum(player.stats.max_hp, true)
 	player.hitbox_root.set_hurtboxes_enabled(true)
+	_last_safe_position = spawn_point
 	player.camera.snap_to_target()
 
 
@@ -226,6 +259,7 @@ func add_warning_sketch(at: Vector2, text: String) -> Label:
 
 
 func _add_slab(rect: Rect2, layer: int, tile: String, slab_name: String) -> StaticBody2D:
+	_note_ground(rect)
 	var body: StaticBody2D = StaticBody2D.new()
 	body.name = "%s_%d" % [slab_name, get_child_count()]
 	body.position = rect.get_center()

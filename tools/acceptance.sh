@@ -238,9 +238,23 @@ m6() {
   done
 }
 
+# --------------------------------------------------------------------------- M7
+
+m7() {
+  echo "M7 — Level 01 \"The Margins\""
+  local output
+  output="$(timeout 900 "$GODOT" --headless -s tools/run_tests.gd -- level_01 2>&1)"
+  if [ $? -eq 0 ]; then
+    pass "gates proved over all legal loadouts, and an autopilot clears the level"
+  else
+    fail "gates proved over all legal loadouts, and an autopilot clears the level"
+    echo "$output" | tail -30
+  fi
+}
+
 # --------------------------------------------------------------------------- run
 # Add each milestone's function name here as it lands.
-MILESTONES=(m0 m2 m3 m4 m5 m6)
+MILESTONES=(m0 m2 m3 m4 m5 m6 m7)
 
 for milestone in "${MILESTONES[@]}"; do
   if wanted "${milestone^^}" || [ ${#SELECTED[@]} -eq 0 ]; then

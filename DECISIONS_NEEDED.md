@@ -164,3 +164,44 @@ The tail (`sting_attack`, damage box at torso height) hits it in either case.
 
 The reach check that found this now runs at boot for every starter attack
 against every enemy, so this class of silent immunity cannot reappear unnoticed.
+
+---
+
+## D6 — a dodge roll cannot fit through any crawl tunnel
+
+- **Waiver id:** none — this is a level-design consequence, not a validation
+  failure, so it is recorded here rather than enforced by a check.
+- **Status:** OPEN — worked around in Level 01; the alternative key does not work.
+
+**Conflict.** `DESIGN.md §9` lists the canonical key for a low crawl tunnel as
+*"`crouch` legs (or Light class + roll)"*, and `effects.json → dodge_roll` says a
+roll *"fits under crawl tunnels only while rolling"*. Neither is achievable with
+the shipped numbers:
+
+- **Light class is unreachable** at all (see D4), so "Light class + roll" cannot
+  happen to anyone.
+- **A roll is too short to traverse a tunnel.** `game_config.json → movement.roll`
+  gives `distance 190` over `duration 0.32`, with a `cooldown` of 0.5 s. A
+  creature is 110–150 px wide, so clearing an overhang of length *L* needs
+  `L + width` of travel while ducked — at most **80 px** of overhang for the
+  narrowest build. Anything longer leaves the creature standing up underneath
+  the ceiling mid-tunnel, where it is stuck. Rolls cannot be chained through
+  either: the 0.5 s cooldown is spent standing.
+
+So in practice a crawl tunnel is a **`crouch`-only gate**, and `crouch` comes
+from exactly one part, `legs_tree_trunks` (100 ink).
+
+**Options.**
+1. Let a roll be held or chained — remove the standing beat between rolls while
+   a ceiling is overhead. *Agent's recommendation*: it is the smallest change
+   that makes the documented key real, and rolling through a gap feels good.
+2. Raise `roll.distance` to ~400 and drop the cooldown, so one roll clears a real
+   tunnel. Changes dodge combat as a side effect.
+3. Accept crouch as the only key and delete "(or Light class + roll)" from
+   DESIGN §9 and the promise from `effects.json → dodge_roll`.
+
+**Current behaviour.** Level 01 puts its crawl tunnel on an optional branch — on
+the chasm floor, to the *left* of where the player lands, so the way onward is
+never behind it. It is signposted "duck (ink back there)" and rewards a
+`crouch` build with an ink cache. The level stays completable with the starter
+kit, which has no crouch.
